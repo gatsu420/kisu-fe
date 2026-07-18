@@ -19,11 +19,9 @@ export default function Dashboard() {
   const [param, setParam] = useState('')
   const [paramDraft, setParamDraft] = useState('')
   const [prompt, setPrompt] = useState('')
-  const [messages, setMessages] = useState<Message[]>([])
+  const [message, setMessage] = useState<Message | null>(null)
   const [loading, setLoading] = useState(false)
-  const [expandedCalls, setExpandedCalls] = useState<Record<number, boolean>>({})
   const promptRef = useRef<HTMLTextAreaElement>(null)
-  const bottomRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
   const paramLocked = param.length > 0
@@ -31,10 +29,6 @@ export default function Dashboard() {
   useEffect(() => {
     if (paramLocked) promptRef.current?.focus()
   }, [paramLocked])
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
 
   const handleSetParam = (e: FormEvent) => {
     e.preventDefault()
@@ -45,27 +39,21 @@ export default function Dashboard() {
   const handleAsk = async () => {
     if (!prompt.trim() || !paramLocked || loading) return
     const currentPrompt = prompt.trim()
-    setPrompt('')
     setLoading(true)
 
-    // Append a placeholder message
-    const idx = messages.length
-    setMessages((prev) => [...prev, { prompt: currentPrompt }])
+    // Set placeholder message (overwrites previous)
+    setMessage({ prompt: currentPrompt })
 
     try {
       const data = await fetchAnswer(currentPrompt, param)
-      setMessages((prev) =>
-        prev.map((m, i) => (i === idx ? { ...m, result: data } : m)),
-      )
+      setMessage({ prompt: currentPrompt, result: data })
     } catch (e) {
       if (e instanceof Error && e.message === 'unauthorized') {
         navigate('/login')
         return
       }
       const errMsg = e instanceof Error ? e.message : 'something went wrong'
-      setMessages((prev) =>
-        prev.map((m, i) => (i === idx ? { ...m, error: errMsg } : m)),
-      )
+      setMessage({ prompt: currentPrompt, error: errMsg })
     } finally {
       setLoading(false)
     }
@@ -116,69 +104,31 @@ export default function Dashboard() {
           </form>
         ) : (
           <>
-
-            {/* Messages */}
-            <div className={styles.messages}>
-              {messages.map((msg, i) => {
-                const funcCalls = getFuncCalls(msg.result)
-                const expanded = !!expandedCalls[i]
-                const toggleCalls = funcCalls
-                  ? () =>
-                      setExpandedCalls((prev) => ({
-                        ...prev,
-                        [i]: !prev[i],
-                      }))
-                  : undefined
-                return (
-                  <div key={i} className={styles.message}>
-                    <div className={styles.promptRow}>
-                      <p className={styles.promptLabel}>{msg.prompt}</p>
-                      {toggleCalls && (
-                        <button
-                          className={styles.moreBtn}
-                          onClick={toggleCalls}
-                          title="Show details"
-                        >
-                          ⋯
-                        </button>
-                      )}
-                    </div>
-                    {msg.error ? (
-                      <p className={styles.error}>{msg.error}</p>
-                    ) : msg.result !== undefined ? (
-                      <>
-                        {funcCalls && expanded && (
-                          <div className={styles.funcCallsBubble}>
-                            <p className={styles.funcCallsTitle}>Function Call</p>
-                            <pre className={styles.funcCallsPre}>{funcCalls}</pre>
-                          </div>
-                        )}
-                        <ResultTable data={msg.result} />
-                      </>
-                    ) : (
-                      <p className={styles.thinking}>Thinking...</p>
-                    )}
-                  </div>
-                )
-              })}
-              <div ref={bottomRef} />
+            {/* Info cards */}
+            <div className={styles.infoCards}>
+              <div className={styles.infoCard}>
+                <div className={styles.infoCardHeader}>
+                  <p className={styles.infoCardLabel}>looking up:</p>
+                  <button
+                    className={styles.infoCardAction}
+                    onClick={() => {
+                      setParam('')
+                      setParamDraft('')
+                      setMessage(null)
+                    }}
+                  >
+                    change
+                  </button>
+                </div>
+                <p className={styles.infoCardValue}>{param}</p>
+              </div>
+              <div className={styles.infoCard}>
+                <p className={styles.infoCardLabel}>from data source:</p>
+                <p className={styles.infoCardValue}>default</p>
+              </div>
             </div>
 
             {/* Input bar */}
-            <div className={styles.chipRow}>
-              <span className={styles.chipLabel}>Looking up:</span>
-              <span className={styles.chip}>{param}</span>
-              <button
-                className={styles.chipChange}
-                onClick={() => {
-                  setParam('')
-                  setParamDraft('')
-                  setMessages([])
-                }}
-              >
-                change
-              </button>
-            </div>
             <div className={styles.inputBar}>
               <textarea
                 ref={promptRef}
@@ -197,6 +147,19 @@ export default function Dashboard() {
               >
                 {loading ? '...' : 'Ask'}
               </button>
+            </div>
+
+            {/* Result table */}
+            <div className={styles.tableContainer}>
+              {message === null ? (
+                <p className={styles.emptyTable}>Ask a question above to see results.</p>
+              ) : message.error ? (
+                <p className={styles.error}>{message.error}</p>
+              ) : message.result !== undefined ? (
+                <ResultTable data={message.result} />
+              ) : (
+                <p className={styles.thinking}>Thinking...</p>
+              )}
             </div>
           </>
         )}
@@ -276,25 +239,11 @@ function renderCell(value: unknown): string {
   return String(value)
 }
 
-function getFuncCalls(data: unknown): string | null {
-  if (data && typeof data === 'object' && !Array.isArray(data)) {
-    const obj = data as Record<string, unknown>
-    if (
-      'stringified_func_calls' in obj &&
-      typeof obj.stringified_func_calls === 'string' &&
-      obj.stringified_func_calls !== 'null'
-    ) {
-      return obj.stringified_func_calls
-    }
-  }
-  return null
-}
-
 function getTextAnswer(data: unknown): string | null {
   if (data && typeof data === 'object' && !Array.isArray(data)) {
     const obj = data as Record<string, unknown>
     if ('answer' in obj && typeof obj.answer === 'string') {
-      return obj.answer
+      return obj.answer as string
     }
   }
   return null

@@ -33,47 +33,37 @@
 
 .main {
   flex: 1;
-  max-width: 75%;
+  max-width: 100%;
   width: 100%;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 1.5rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.setupCard {
+.filterForm {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
-  align-self: center;
-  margin-top: 30vh;
+  padding: 1rem;
 }
 
-.setupLabel {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 0.75rem;
-}
-
-.setupRow {
+.filterRow {
   display: flex;
   gap: 0.5rem;
 }
 
-.setupInput {
+.filterInput {
   flex: 1;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.95rem;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
   border: 1px solid #ddd;
   border-radius: 6px;
   outline: none;
 }
 
-.setupBtn {
-  padding: 0.5rem 1.25rem;
-  font-size: 0.95rem;
+.filterBtn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
   font-weight: 600;
   background: #4285f4;
   color: white;
@@ -82,21 +72,17 @@
   cursor: pointer;
 }
 
-.chipRow {
+.chipContainer {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   flex-shrink: 0;
-  margin-bottom: 0.5rem;
 }
 
-.chipLabel {
-  font-size: 0.85rem;
-  color: #888;
-}
-
-.chip {
-  display: inline-block;
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   padding: 0.25rem 0.75rem;
   background: #e8f0fe;
   color: #1a73e8;
@@ -105,106 +91,39 @@
   font-weight: 500;
 }
 
-.chipChange {
+.chipRemove {
   background: none;
   border: none;
-  color: #888;
-  font-size: 0.8rem;
+  color: #1a73e8;
+  font-size: 1.1rem;
   cursor: pointer;
-  text-decoration: underline;
-}
-
-.messages {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  overflow-y: auto;
-}
-
-.message {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.promptLabel {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #444;
-  margin: 0;
-}
-
-.promptRow {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.moreBtn {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  color: #888;
-  cursor: pointer;
-  padding: 0 0.25rem;
+  padding: 0;
   line-height: 1;
-  border-radius: 4px;
 }
 
-.thinking {
-  color: #999;
-  font-size: 0.875rem;
-  font-style: italic;
-}
-
-.error {
+.chipRemove:hover {
   color: #d32f2f;
-  font-size: 0.9rem;
-}
-.emptyResult {
-  color: #999;
-  font-size: 0.9rem;
-  font-style: italic;
 }
 
-.inputBar {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-end;
+.tableContainer {
+  flex: 1;
   background: white;
   border-radius: 12px;
-  padding: 0.75rem 1rem;
-  flex-shrink: 0;
-  margin-top: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.promptInput {
-  flex: 1;
-  padding: 0.5rem 0;
-  font-size: 0.95rem;
-  border: none;
-  outline: none;
-  resize: none;
-  font-family: inherit;
-  line-height: 1.5;
-}
-
-.askBtn {
-  padding: 0.5rem 1.25rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  background: #4285f4;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  flex-shrink: 0;
+.emptyTable {
+  color: #999;
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 2rem;
+  text-align: center;
 }
 
 .tableWrap {
-  background: white;
-  border-radius: 12px;
+  flex: 1;
   overflow: auto;
 }
 
@@ -223,6 +142,9 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
+  background: #fafafa;
+  position: sticky;
+  top: 0;
 }
 
 .td {
@@ -230,7 +152,7 @@
   border-bottom: 1px solid #f0f0f0;
   font-size: 0.9rem;
   color: #333;
-  max-width: 400px;
+  max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -238,40 +160,4 @@
 
 .trEven {
   background: #fafafa;
-}
-
-.pre {
-  background: #1a1a2e;
-  color: #a0e7a0;
-  padding: 1rem;
-  border-radius: 8px;
-  overflow: auto;
-  font-size: 0.85rem;
-  line-height: 1.5;
-}
-
-.funcCallsBubble {
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.funcCallsTitle {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0 0 0.4rem;
-}
-
-.funcCallsPre {
-  margin: 0;
-  font-size: 0.8rem;
-  line-height: 1.45;
-  color: #666;
-  white-space: pre-wrap;
-  word-break: break-word;
 }

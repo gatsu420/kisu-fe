@@ -84,12 +84,12 @@ export default function Dashboard() {
           <form onSubmit={handleSetParam} className={styles.setupCard}>
             <p className={styles.setupLabel}>Who or what do you want to look up?</p>
             <div className={styles.setupRow}>
-              <input
+              <textarea
                 className={styles.setupInput}
-                type="text"
                 placeholder="e.g. alice@example.com"
                 value={paramDraft}
                 onChange={(e) => setParamDraft(e.target.value)}
+                rows={3}
                 autoFocus
               />
               <button

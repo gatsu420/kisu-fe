@@ -1,10 +1,10 @@
 # Roadmap
-- [x] Display func call in every chat (can be toggled)
-- [ ] Show chat history, which is stored using sqlite
-- [ ] Add billing
+
+- [ ] Add tool generator from yml schema
+- [ ] Store and load bookmark in postgres
+- [ ] Add separate repo for managed deployment
 
 # React + TypeScript + Vite
-
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 

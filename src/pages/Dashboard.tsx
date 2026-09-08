@@ -4,67 +4,73 @@ import {
   useEffect,
   type FormEvent,
   type KeyboardEvent,
-} from 'react'
-import { useNavigate } from 'react-router-dom'
-import { fetchAnswer } from '../lib/api'
-import styles from './Dashboard.module.css'
+} from "react";
+import { useNavigate } from "react-router-dom";
+import { fetchAnswer } from "../lib/api";
+import styles from "./Dashboard.module.css";
 
 interface Message {
-  prompt: string
-  result?: unknown
-  error?: string
+  prompt: string;
+  result?: unknown;
+  error?: string;
 }
 
 export default function Dashboard() {
-  const [param, setParam] = useState('')
-  const [paramDraft, setParamDraft] = useState('')
-  const [prompt, setPrompt] = useState('')
-  const [message, setMessage] = useState<Message | null>(null)
-  const [loading, setLoading] = useState(false)
-  const promptRef = useRef<HTMLTextAreaElement>(null)
-  const navigate = useNavigate()
+  const [param, setParam] = useState("");
+  const [paramDraft, setParamDraft] = useState("");
+  const [filter, setFilter] = useState("");
+  const [filterDraft, setFilterDraft] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [message, setMessage] = useState<Message | null>(null);
+  const [loading, setLoading] = useState(false);
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+  const navigate = useNavigate();
 
-  const paramLocked = param.length > 0
+  const paramLocked = param.length > 0 && filter.length > 0;
 
   useEffect(() => {
-    if (paramLocked) promptRef.current?.focus()
-  }, [paramLocked])
+    if (paramLocked) promptRef.current?.focus();
+  }, [paramLocked]);
 
   const handleSetParam = (e: FormEvent) => {
-    e.preventDefault()
-    const trimmed = paramDraft.trim()
-    if (trimmed) setParam(trimmed)
-  }
+    e.preventDefault();
+    const trimmedParam = paramDraft.trim();
+    const trimmedFilter = filterDraft.trim();
+    if (trimmedParam && trimmedFilter) {
+      setParam(trimmedParam);
+      setFilter(trimmedFilter);
+    }
+  };
 
   const handleAsk = async () => {
-    if (!prompt.trim() || !paramLocked || loading) return
-    const currentPrompt = prompt.trim()
-    setLoading(true)
+    if (!prompt.trim() || !paramLocked || loading) return;
+    const currentPrompt = prompt.trim();
+    setLoading(true);
 
     // Set placeholder message (overwrites previous)
-    setMessage({ prompt: currentPrompt })
+    setMessage({ prompt: currentPrompt });
 
     try {
-      const data = await fetchAnswer(currentPrompt, param)
-      setMessage({ prompt: currentPrompt, result: data })
+      const data = await fetchAnswer(currentPrompt, param, filter);
+      setMessage({ prompt: currentPrompt, result: data });
     } catch (e) {
-      if (e instanceof Error && e.message === 'unauthorized') {
-        navigate('/login')
-        return
+      if (e instanceof Error && e.message === "unauthorized") {
+        navigate("/login");
+        return;
       }
-      const errMsg = e instanceof Error ? e.message : 'something went wrong'
-      setMessage({ prompt: currentPrompt, error: errMsg })
+      const errMsg = e instanceof Error ? e.message : "something went wrong";
+      setMessage({ prompt: currentPrompt, error: errMsg });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handlePromptKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleAsk()
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleAsk();
     }
-  }
+  };
 
   return (
     <div className={styles.page}>
@@ -72,7 +78,7 @@ export default function Dashboard() {
         <h1 className={styles.logo}>kisu</h1>
         <button
           className={styles.signOutBtn}
-          onClick={() => navigate('/login?signout')}
+          onClick={() => navigate("/login?signout")}
         >
           Sign out
         </button>
@@ -82,7 +88,7 @@ export default function Dashboard() {
         {/* Param setup */}
         {!paramLocked ? (
           <form onSubmit={handleSetParam} className={styles.setupCard}>
-            <p className={styles.setupLabel}>Who or what do you want to look up?</p>
+            <p className={styles.setupLabel}>Find these records ...</p>
             <div className={styles.setupRow}>
               <textarea
                 className={styles.setupInput}
@@ -92,11 +98,25 @@ export default function Dashboard() {
                 rows={3}
                 autoFocus
               />
+              <p
+                className={styles.setupLabel}
+                style={{ marginTop: "0.75rem", marginBottom: "0" }}
+              >
+                ... on this column
+              </p>
+              <input
+                className={styles.setupInput}
+                placeholder="e.g. email"
+                value={filterDraft}
+                onChange={(e) => setFilterDraft(e.target.value)}
+              />
               <button
                 type="submit"
                 className={styles.setupBtn}
-                style={{ opacity: paramDraft.trim() ? 1 : 0.5 }}
-                disabled={!paramDraft.trim()}
+                style={{
+                  opacity: paramDraft.trim() && filterDraft.trim() ? 1 : 0.5,
+                }}
+                disabled={!paramDraft.trim() || !filterDraft.trim()}
               >
                 Set
               </button>
@@ -108,13 +128,15 @@ export default function Dashboard() {
             <div className={styles.infoCards}>
               <div className={styles.infoCard}>
                 <div className={styles.infoCardHeader}>
-                  <p className={styles.infoCardLabel}>looking up:</p>
+                  <p className={styles.infoCardLabel}>Find these records:</p>
                   <button
                     className={styles.infoCardAction}
                     onClick={() => {
-                      setParam('')
-                      setParamDraft('')
-                      setMessage(null)
+                      setParam("");
+                      setParamDraft("");
+                      setFilter("");
+                      setFilterDraft("");
+                      setMessage(null);
                     }}
                   >
                     change
@@ -123,8 +145,8 @@ export default function Dashboard() {
                 <p className={styles.infoCardValue}>{param}</p>
               </div>
               <div className={styles.infoCard}>
-                <p className={styles.infoCardLabel}>from data source:</p>
-                <p className={styles.infoCardValue}>default</p>
+                <p className={styles.infoCardLabel}>on this column:</p>
+                <p className={styles.infoCardValue}>{filter}</p>
               </div>
             </div>
 
@@ -145,14 +167,16 @@ export default function Dashboard() {
                 onClick={handleAsk}
                 disabled={loading || !prompt.trim()}
               >
-                {loading ? '...' : 'Ask'}
+                {loading ? "..." : "Ask"}
               </button>
             </div>
 
             {/* Result table */}
             <div className={styles.tableContainer}>
               {message === null ? (
-                <p className={styles.emptyTable}>Ask a question above to see results.</p>
+                <p className={styles.emptyTable}>
+                  Ask a question above to see results.
+                </p>
               ) : message.error ? (
                 <p className={styles.error}>{message.error}</p>
               ) : message.result !== undefined ? (
@@ -165,27 +189,27 @@ export default function Dashboard() {
         )}
       </main>
     </div>
-  )
+  );
 }
 
 interface ResultTableProps {
-  data: unknown
+  data: unknown;
 }
 
 function ResultTable({ data }: ResultTableProps) {
-  const rows = unwrapAnswer(data)
+  const rows = unwrapAnswer(data);
 
   if (rows && rows.length === 0) {
-    return <p className={styles.emptyResult}>No results found.</p>
+    return <p className={styles.emptyResult}>No results found.</p>;
   }
 
   if (
     rows &&
     rows.length > 0 &&
-    typeof rows[0] === 'object' &&
+    typeof rows[0] === "object" &&
     rows[0] !== null
   ) {
-    const columns = Object.keys(rows[0])
+    const columns = Object.keys(rows[0]);
     return (
       <div className={styles.tableWrap}>
         <table className={styles.table}>
@@ -211,40 +235,40 @@ function ResultTable({ data }: ResultTableProps) {
           </tbody>
         </table>
       </div>
-    )
+    );
   }
 
-  const textAnswer = getTextAnswer(data)
+  const textAnswer = getTextAnswer(data);
   if (textAnswer !== null) {
-    return <p className={styles.emptyResult}>{textAnswer}</p>
+    return <p className={styles.emptyResult}>{textAnswer}</p>;
   }
 
-  return <pre className={styles.pre}>{JSON.stringify(data, null, 2)}</pre>
+  return <pre className={styles.pre}>{JSON.stringify(data, null, 2)}</pre>;
 }
 
 function unwrapAnswer(data: unknown): Record<string, unknown>[] | null {
-  if (Array.isArray(data)) return data as Record<string, unknown>[]
-  if (data && typeof data === 'object' && !Array.isArray(data)) {
-    const obj = data as Record<string, unknown>
-    if ('answer' in obj && Array.isArray(obj.answer)) {
-      return obj.answer as Record<string, unknown>[]
+  if (Array.isArray(data)) return data as Record<string, unknown>[];
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    const obj = data as Record<string, unknown>;
+    if ("answer" in obj && Array.isArray(obj.answer)) {
+      return obj.answer as Record<string, unknown>[];
     }
   }
-  return null
+  return null;
 }
 
 function renderCell(value: unknown): string {
-  if (value === null || value === undefined) return ''
-  if (typeof value === 'object') return JSON.stringify(value)
-  return String(value)
+  if (value === null || value === undefined) return "";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
 }
 
 function getTextAnswer(data: unknown): string | null {
-  if (data && typeof data === 'object' && !Array.isArray(data)) {
-    const obj = data as Record<string, unknown>
-    if ('answer' in obj && typeof obj.answer === 'string') {
-      return obj.answer as string
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    const obj = data as Record<string, unknown>;
+    if ("answer" in obj && typeof obj.answer === "string") {
+      return obj.answer as string;
     }
   }
-  return null
+  return null;
 }

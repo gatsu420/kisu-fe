@@ -91,7 +91,7 @@ export default function Dashboard() {
             <p className={styles.setupLabel}>Find these records ...</p>
             <div className={styles.setupRow}>
               <textarea
-                className={styles.setupInput}
+                className={styles.setupInputTextarea}
                 placeholder="e.g. alice@example.com"
                 value={paramDraft}
                 onChange={(e) => setParamDraft(e.target.value)}

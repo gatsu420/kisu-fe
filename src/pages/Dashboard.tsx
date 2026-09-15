@@ -76,6 +76,20 @@ export default function Dashboard() {
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.logo}>kisu</h1>
+        <nav className={styles.nav}>
+          <button
+            className={`${styles.navBtn} ${styles.navBtnActive}`}
+            onClick={() => navigate("/")}
+          >
+            Dashboard
+          </button>
+          <button
+            className={styles.navBtn}
+            onClick={() => navigate("/tools")}
+          >
+            Tools
+          </button>
+        </nav>
         <button
           className={styles.signOutBtn}
           onClick={() => navigate("/login?signout")}
@@ -85,9 +99,11 @@ export default function Dashboard() {
       </header>
 
       <main className={styles.main}>
-        {/* Param setup */}
-        {!paramLocked ? (
-          <form onSubmit={handleSetParam} className={styles.setupCard}>
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Dashboard</h2>
+          {/* Param setup */}
+          {!paramLocked ? (
+            <form onSubmit={handleSetParam} className={styles.setupCard}>
             <p className={styles.setupLabel}>Find these records ...</p>
             <div className={styles.setupRow}>
               <textarea
@@ -100,7 +116,6 @@ export default function Dashboard() {
               />
               <p
                 className={styles.setupLabel}
-                style={{ marginTop: "0.75rem", marginBottom: "0" }}
               >
                 ... on this column
               </p>
@@ -122,8 +137,8 @@ export default function Dashboard() {
               </button>
             </div>
           </form>
-        ) : (
-          <>
+          ) : (
+            <>
             {/* Info cards */}
             <div className={styles.infoCards}>
               <div className={styles.infoCard}>
@@ -185,8 +200,9 @@ export default function Dashboard() {
                 <p className={styles.thinking}>Thinking...</p>
               )}
             </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </main>
     </div>
   );

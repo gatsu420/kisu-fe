@@ -76,6 +76,20 @@ export default function Dashboard() {
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.logo}>kisu</h1>
+        <nav className={styles.nav}>
+          <button
+            className={`${styles.navBtn} ${styles.navBtnActive}`}
+            onClick={() => navigate("/")}
+          >
+            Dashboard
+          </button>
+          <button
+            className={styles.navBtn}
+            onClick={() => navigate("/tools")}
+          >
+            Tools
+          </button>
+        </nav>
         <button
           className={styles.signOutBtn}
           onClick={() => navigate("/login?signout")}

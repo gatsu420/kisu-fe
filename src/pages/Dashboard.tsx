@@ -99,9 +99,11 @@ export default function Dashboard() {
       </header>
 
       <main className={styles.main}>
-        {/* Param setup */}
-        {!paramLocked ? (
-          <form onSubmit={handleSetParam} className={styles.setupCard}>
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Dashboard</h2>
+          {/* Param setup */}
+          {!paramLocked ? (
+            <form onSubmit={handleSetParam} className={styles.setupCard}>
             <p className={styles.setupLabel}>Find these records ...</p>
             <div className={styles.setupRow}>
               <textarea
@@ -114,7 +116,6 @@ export default function Dashboard() {
               />
               <p
                 className={styles.setupLabel}
-                style={{ marginTop: "0.75rem", marginBottom: "0" }}
               >
                 ... on this column
               </p>
@@ -136,8 +137,8 @@ export default function Dashboard() {
               </button>
             </div>
           </form>
-        ) : (
-          <>
+          ) : (
+            <>
             {/* Info cards */}
             <div className={styles.infoCards}>
               <div className={styles.infoCard}>
@@ -199,8 +200,9 @@ export default function Dashboard() {
                 <p className={styles.thinking}>Thinking...</p>
               )}
             </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </main>
     </div>
   );

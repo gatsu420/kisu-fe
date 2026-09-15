@@ -166,9 +166,6 @@ export default function Tools() {
       <main className={styles.main}>
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Add New Tool</h2>
-          <p className={styles.cardDescription}>
-            Define a tool that can be used to query your data
-          </p>
 
           {success && (
             <div className={styles.success}>

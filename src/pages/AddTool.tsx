@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { addTool } from "../lib/api";
-import styles from "./Tools.module.css";
+import Header from "../components/Header";
+import styles from "./Tool.module.css";
 
 interface Column {
   name: string;
@@ -24,7 +25,7 @@ interface FormData {
   param_description: string;
 }
 
-export default function Tools() {
+export default function AddTool() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -139,29 +140,7 @@ export default function Tools() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.logo}>kisu</h1>
-        <nav className={styles.nav}>
-          <button
-            className={styles.navBtn}
-            onClick={() => navigate("/")}
-          >
-            Dashboard
-          </button>
-          <button
-            className={`${styles.navBtn} ${styles.navBtnActive}`}
-            onClick={() => navigate("/tools")}
-          >
-            Tools
-          </button>
-        </nav>
-        <button
-          className={styles.signOutBtn}
-          onClick={() => navigate("/login?signout")}
-        >
-          Sign out
-        </button>
-      </header>
+      <Header />
 
       <main className={styles.main}>
         <div className={styles.card}>

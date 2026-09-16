@@ -5,76 +5,6 @@
   flex-direction: column;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  height: 2.75rem;
-  padding: 0 2rem;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.logo {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1a1a2e;
-}
-
-.nav {
-  display: flex;
-  align-self: stretch;
-  gap: 0.25rem;
-  margin-bottom: -1px;
-}
-
-.navBtn {
-  display: flex;
-  align-items: center;
-  padding: 0 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 8px 8px 0 0;
-  cursor: pointer;
-  color: #6b7280;
-  transition: all 0.15s;
-}
-
-.navBtn:hover {
-  color: #374151;
-  background: #f9fafb;
-}
-
-.navBtnActive {
-  background: #f5f5f5;
-  color: #1a1a2e;
-  border-color: #e5e7eb;
-  border-bottom-color: #f5f5f5;
-  font-weight: 600;
-}
-
-.navBtnActive:hover {
-  background: #f5f5f5;
-}
-
-.signOutBtn {
-  margin-left: auto;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.8125rem;
-  background: transparent;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  cursor: pointer;
-  color: #6b7280;
-  transition: color 0.15s;
-}
-
-.signOutBtn:hover {
-  color: #374151;
-}
-
 .main {
   flex: 1;
   max-width: 960px;
@@ -259,6 +189,138 @@
 
 .paramDescription {
   margin-top: 1rem;
+}
+
+.emptyState {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.toolList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.toolCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.toolHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.toolTable {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.toolDescription {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin: 0.35rem 0 0;
+}
+
+.paramInfoRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.paramLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #9ca3af;
+  margin: 0 0 0.15rem;
+}
+
+.paramValue {
+  font-size: 0.875rem;
+  color: #374151;
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+  margin: 0 0 0.5rem;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.td {
+  padding: 0.5rem 0.75rem;
+  color: #4b5563;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.trEven {
+  background: #fafafa;
+}
+
+.exampleList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.example {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.exampleDescription {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.codeBlock {
+  margin: 0;
+  padding: 0.75rem;
+  font-size: 0.8125rem;
+  background: #1a1a2e;
+  color: #e5e7eb;
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .submitBtn {

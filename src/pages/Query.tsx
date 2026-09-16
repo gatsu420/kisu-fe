@@ -8,7 +8,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { fetchAnswer } from "../lib/api";
 import Header from "../components/Header";
-import styles from "./Dashboard.module.css";
+import styles from "./Query.module.css";
 
 interface Message {
   prompt: string;
@@ -16,7 +16,7 @@ interface Message {
   error?: string;
 }
 
-export default function Dashboard() {
+export default function Query() {
   const [param, setParam] = useState("");
   const [paramDraft, setParamDraft] = useState("");
   const [filter, setFilter] = useState("");
@@ -79,7 +79,7 @@ export default function Dashboard() {
 
       <main className={styles.main}>
         <div className={styles.card}>
-          <h2 className={styles.cardTitle}>Dashboard</h2>
+          <h2 className={styles.cardTitle}>Query</h2>
           {/* Param setup */}
           {!paramLocked ? (
             <form onSubmit={handleSetParam} className={styles.setupCard}>

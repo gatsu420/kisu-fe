@@ -5,7 +5,7 @@ export default function Header() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  const isDashboard = pathname === "/";
+  const isQuery = pathname === "/";
   const isTool = pathname.startsWith("/tool");
 
   return (
@@ -13,10 +13,10 @@ export default function Header() {
       <h1 className={styles.logo}>kisu</h1>
       <nav className={styles.nav}>
         <button
-          className={`${styles.navBtn} ${isDashboard ? styles.navBtnActive : ""}`}
+          className={`${styles.navBtn} ${isQuery ? styles.navBtnActive : ""}`}
           onClick={() => navigate("/")}
         >
-          Dashboard
+          Query
         </button>
         <div className={styles.dropdown}>
           <button

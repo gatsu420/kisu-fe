@@ -148,7 +148,7 @@ export default function AddTool() {
 
           {success && (
             <div className={styles.success}>
-              Tool added successfully! You can now use it in the Dashboard.
+              Tool added successfully! You can now use it in the Query.
             </div>
           )}
 

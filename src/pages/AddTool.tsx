@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { addTool } from "../lib/api";
+import { addTool, type ToolType } from "../lib/api";
 import Header from "../components/Header";
 import styles from "./Tool.module.css";
 
@@ -10,7 +10,7 @@ interface Column {
   description: string;
 }
 
-interface QueryExample {
+interface Query {
   description: string;
   query: string;
 }
@@ -19,7 +19,7 @@ interface FormData {
   tool_description: string;
   table_name: string;
   columns: Column[];
-  query_examples: QueryExample[];
+  query: Query[];
   param_name: string;
   param_type: string;
   param_description: string;
@@ -27,15 +27,26 @@ interface FormData {
 
 export default function AddTool() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<ToolType>("table");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const changeMode = (next: ToolType) => {
+    setSuccess(false);
+    setError(null);
+    if (next === "query") {
+      // Query mode allows only one query.
+      setFormData((prev) => ({ ...prev, query: prev.query.slice(0, 1) }));
+    }
+    setMode(next);
+  };
 
   const [formData, setFormData] = useState<FormData>({
     tool_description: "",
     table_name: "",
     columns: [{ name: "", type: "", description: "" }],
-    query_examples: [{ description: "", query: "" }],
+    query: [{ description: "", query: "" }],
     param_name: "",
     param_type: "",
     param_description: "",
@@ -71,30 +82,27 @@ export default function AddTool() {
     setFormData((prev) => ({ ...prev, columns: newColumns }));
   };
 
-  const handleQueryExampleChange = (
+  const handleQueryChange = (
     index: number,
-    field: keyof QueryExample,
+    field: keyof Query,
     value: string,
   ) => {
-    const newExamples = [...formData.query_examples];
-    newExamples[index] = { ...newExamples[index], [field]: value };
-    setFormData((prev) => ({ ...prev, query_examples: newExamples }));
+    const newQuery = [...formData.query];
+    newQuery[index] = { ...newQuery[index], [field]: value };
+    setFormData((prev) => ({ ...prev, query: newQuery }));
   };
 
-  const addQueryExample = () => {
+  const addQuery = () => {
     setFormData((prev) => ({
       ...prev,
-      query_examples: [
-        ...prev.query_examples,
-        { description: "", query: "" },
-      ],
+      query: [...prev.query, { description: "", query: "" }],
     }));
   };
 
-  const removeQueryExample = (index: number) => {
-    if (formData.query_examples.length <= 1) return;
-    const newExamples = formData.query_examples.filter((_, i) => i !== index);
-    setFormData((prev) => ({ ...prev, query_examples: newExamples }));
+  const removeQuery = (index: number) => {
+    if (formData.query.length <= 1) return;
+    const newQuery = formData.query.filter((_, i) => i !== index);
+    setFormData((prev) => ({ ...prev, query: newQuery }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -103,26 +111,41 @@ export default function AddTool() {
     setSuccess(false);
 
     // Validate
+    const missingTableName =
+      mode === "table" && !formData.table_name.trim();
     if (
       !formData.tool_description.trim() ||
-      !formData.table_name.trim() ||
+      missingTableName ||
       !formData.param_name.trim() ||
       !formData.param_type.trim()
     ) {
-      setError("Please fill in all required fields");
+      setError(
+        mode === "table"
+          ? "Please fill in all required fields"
+          : "Please fill in the tool description and parameter fields",
+      );
       return;
     }
 
     setLoading(true);
     try {
-      await addTool(formData);
+      await addTool({
+        tool_description: formData.tool_description,
+        table_name: mode === "table" ? formData.table_name : "",
+        columns: formData.columns,
+        type: mode,
+        examples: formData.query,
+        param_name: formData.param_name,
+        param_type: formData.param_type,
+        param_description: formData.param_description,
+      });
       setSuccess(true);
       // Reset form
       setFormData({
         tool_description: "",
         table_name: "",
         columns: [{ name: "", type: "", description: "" }],
-        query_examples: [{ description: "", query: "" }],
+        query: [{ description: "", query: "" }],
         param_name: "",
         param_type: "",
         param_description: "",
@@ -138,6 +161,111 @@ export default function AddTool() {
     }
   };
 
+  const queryForm = (
+    <div className={styles.formGroup}>
+      <label className={styles.label}>Query</label>
+      {mode === "query" && (
+        <p className={styles.hint}>
+          The query is the source of truth. It can involve a
+          join. No table name is needed.
+        </p>
+      )}
+      {formData.query.map((entry, index) => (
+        <div key={index} className={styles.arrayRow}>
+          <input
+            className={styles.arrayInput}
+            type="text"
+            placeholder="Description"
+            value={entry.description}
+            onChange={(e) =>
+              handleQueryChange(index, "description", e.target.value)
+            }
+          />
+          <input
+            className={styles.arrayInput}
+            type="text"
+            placeholder="SQL query"
+            value={entry.query}
+            onChange={(e) =>
+              handleQueryChange(index, "query", e.target.value)
+            }
+          />
+          {mode === "table" && formData.query.length > 1 && (
+            <button
+              type="button"
+              className={styles.removeBtn}
+              onClick={() => removeQuery(index)}
+            >
+              ×
+            </button>
+          )}
+        </div>
+      ))}
+      {mode === "table" && (
+        <button
+          type="button"
+          className={styles.addBtn}
+          onClick={addQuery}
+        >
+          + Add Query
+        </button>
+      )}
+    </div>
+  );
+
+  const columnsForm = (
+    <div className={styles.formGroup}>
+      <label className={styles.label}>Columns</label>
+      {formData.columns.map((col, index) => (
+        <div key={index} className={styles.arrayRow}>
+          <input
+            className={styles.arrayInput}
+            type="text"
+            placeholder="Name"
+            value={col.name}
+            onChange={(e) =>
+              handleColumnChange(index, "name", e.target.value)
+            }
+          />
+          <input
+            className={styles.arrayInput}
+            type="text"
+            placeholder="Type (e.g. string, int)"
+            value={col.type}
+            onChange={(e) =>
+              handleColumnChange(index, "type", e.target.value)
+            }
+          />
+          <input
+            className={styles.arrayInput}
+            type="text"
+            placeholder="Description"
+            value={col.description}
+            onChange={(e) =>
+              handleColumnChange(index, "description", e.target.value)
+            }
+          />
+          {formData.columns.length > 1 && (
+            <button
+              type="button"
+              className={styles.removeBtn}
+              onClick={() => removeColumn(index)}
+            >
+              ×
+            </button>
+          )}
+        </div>
+      ))}
+      <button
+        type="button"
+        className={styles.addBtn}
+        onClick={addColumn}
+      >
+        + Add Column
+      </button>
+    </div>
+  );
+
   return (
     <div className={styles.page}>
       <Header />
@@ -145,6 +273,27 @@ export default function AddTool() {
       <main className={styles.main}>
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Add New Tool</h2>
+
+          <div className={styles.tabs}>
+            <button
+              type="button"
+              className={`${styles.tab} ${
+                mode === "table" ? styles.tabActive : ""
+              }`}
+              onClick={() => changeMode("table")}
+            >
+              By Table
+            </button>
+            <button
+              type="button"
+              className={`${styles.tab} ${
+                mode === "query" ? styles.tabActive : ""
+              }`}
+              onClick={() => changeMode("query")}
+            >
+              By Query
+            </button>
+          </div>
 
           {success && (
             <div className={styles.success}>
@@ -170,117 +319,24 @@ export default function AddTool() {
             </div>
 
             {/* Table Name */}
-            <div className={styles.formGroup}>
-              <label className={styles.label}>
-                Table Name <span className={styles.required}>*</span>
-              </label>
-              <input
-                className={styles.input}
-                type="text"
-                placeholder="e.g. users"
-                value={formData.table_name}
-                onChange={(e) => handleInputChange(e, "table_name")}
-              />
-            </div>
+            {mode === "table" && (
+              <div className={styles.formGroup}>
+                <label className={styles.label}>
+                  Table Name <span className={styles.required}>*</span>
+                </label>
+                <input
+                  className={styles.input}
+                  type="text"
+                  placeholder="e.g. users"
+                  value={formData.table_name}
+                  onChange={(e) => handleInputChange(e, "table_name")}
+                />
+              </div>
+            )}
 
-            {/* Columns */}
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Columns</label>
-              {formData.columns.map((col, index) => (
-                <div key={index} className={styles.arrayRow}>
-                  <input
-                    className={styles.arrayInput}
-                    type="text"
-                    placeholder="Name"
-                    value={col.name}
-                    onChange={(e) =>
-                      handleColumnChange(index, "name", e.target.value)
-                    }
-                  />
-                  <input
-                    className={styles.arrayInput}
-                    type="text"
-                    placeholder="Type (e.g. string, int)"
-                    value={col.type}
-                    onChange={(e) =>
-                      handleColumnChange(index, "type", e.target.value)
-                    }
-                  />
-                  <input
-                    className={styles.arrayInput}
-                    type="text"
-                    placeholder="Description"
-                    value={col.description}
-                    onChange={(e) =>
-                      handleColumnChange(index, "description", e.target.value)
-                    }
-                  />
-                  {formData.columns.length > 1 && (
-                    <button
-                      type="button"
-                      className={styles.removeBtn}
-                      onClick={() => removeColumn(index)}
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                className={styles.addBtn}
-                onClick={addColumn}
-              >
-                + Add Column
-              </button>
-            </div>
-
-            {/* Query Examples */}
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Query Examples</label>
-              {formData.query_examples.map((example, index) => (
-                <div key={index} className={styles.arrayRow}>
-                  <input
-                    className={styles.arrayInput}
-                    type="text"
-                    placeholder="Description"
-                    value={example.description}
-                    onChange={(e) =>
-                      handleQueryExampleChange(
-                        index,
-                        "description",
-                        e.target.value,
-                      )
-                    }
-                  />
-                  <input
-                    className={styles.arrayInput}
-                    type="text"
-                    placeholder="SQL query"
-                    value={example.query}
-                    onChange={(e) =>
-                      handleQueryExampleChange(index, "query", e.target.value)
-                    }
-                  />
-                  {formData.query_examples.length > 1 && (
-                    <button
-                      type="button"
-                      className={styles.removeBtn}
-                      onClick={() => removeQueryExample(index)}
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                className={styles.addBtn}
-                onClick={addQueryExample}
-              >
-                + Add Query Example
-              </button>
-            </div>
+            {/* Table tab: Columns first. Query tab: Query first. */}
+            {mode === "table" ? columnsForm : queryForm}
+            {mode === "table" ? queryForm : columnsForm}
 
             {/* Param Section */}
             <div className={styles.paramSection}>

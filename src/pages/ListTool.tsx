@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchTool, type Tool } from "../lib/api";
+import { fetchTool, toolTypeOf, type Tool, type ToolType } from "../lib/api";
 import Header from "../components/Header";
 import styles from "./Tool.module.css";
 
 export default function ListTool() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<ToolType>("table");
   const [tool, setTool] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const changeMode = (next: ToolType) => {
+    setMode(next);
+  };
+
+  const visibleTool = tool.filter((item) => toolTypeOf(item) === mode);
 
   useEffect(() => {
     let active = true;
@@ -46,19 +53,41 @@ export default function ListTool() {
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>List Tool</h2>
 
+          <div className={styles.tabs}>
+            <button
+              type="button"
+              className={`${styles.tab} ${
+                mode === "table" ? styles.tabActive : ""
+              }`}
+              onClick={() => changeMode("table")}
+            >
+              By Table
+            </button>
+            <button
+              type="button"
+              className={`${styles.tab} ${
+                mode === "query" ? styles.tabActive : ""
+              }`}
+              onClick={() => changeMode("query")}
+            >
+              By Query
+            </button>
+          </div>
+
           {loading && <p className={styles.emptyState}>Loading tool...</p>}
 
           {error && <div className={styles.error}>{error}</div>}
 
-          {!loading && !error && tool.length === 0 && (
+          {!loading && !error && visibleTool.length === 0 && (
             <p className={styles.emptyState}>
-              No tool yet. Add one from the Add Tool tab.
+              No {mode === "query" ? "query" : "table"} tool yet. Add one
+              from the Add Tool page.
             </p>
           )}
 
-          {!loading && !error && tool.length > 0 && (
+          {!loading && !error && visibleTool.length > 0 && (
             <div className={styles.toolList}>
-              {tool.map((item, index) => (
+              {visibleTool.map((item, index) => (
                 <ToolCard key={index} tool={item} />
               ))}
             </div>
@@ -74,14 +103,15 @@ interface ToolCardProps {
 }
 
 function ToolCard({ tool }: ToolCardProps) {
+  const title = tool.table_name || tool.tool_description || "(untitled tool)";
+  const showDescription = Boolean(tool.table_name && tool.tool_description);
+
   return (
     <div className={styles.toolCard}>
       <div className={styles.toolHeader}>
         <div>
-          <h3 className={styles.toolTable}>
-            {tool.table_name || "(no table)"}
-          </h3>
-          {tool.tool_description && (
+          <h3 className={styles.toolTable}>{title}</h3>
+          {showDescription && (
             <p className={styles.toolDescription}>{tool.tool_description}</p>
           )}
         </div>
@@ -138,11 +168,11 @@ function ToolCard({ tool }: ToolCardProps) {
         </div>
       )}
 
-      {tool.query_examples.length > 0 && (
+      {tool.examples.length > 0 && (
         <div>
-          <p className={styles.sectionTitle}>Query Examples</p>
+          <p className={styles.sectionTitle}>Query</p>
           <div className={styles.exampleList}>
-            {tool.query_examples.map((example, i) => (
+            {tool.examples.map((example, i) => (
               <div key={i} className={styles.example}>
                 {example.description && (
                   <p className={styles.exampleDescription}>

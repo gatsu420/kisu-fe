@@ -113,6 +113,51 @@ export default function AddTool() {
     setFormData((prev) => ({ ...prev, query: newQuery }));
   };
 
+  // Tab inserts a tab character. Shift+Tab removes one indent level.
+  const handleTabKey = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    value: string,
+    apply: (next: string) => void,
+  ) => {
+    if (e.key !== "Tab") return;
+    e.preventDefault();
+    const el = e.currentTarget;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+
+    if (!e.shiftKey) {
+      const next = value.slice(0, start) + "\t" + value.slice(end);
+      apply(next);
+      requestAnimationFrame(() => el.setSelectionRange(start + 1, start + 1));
+      return;
+    }
+
+    // Shift+Tab: remove one indent level from every line in the block.
+    const blockStart = value.lastIndexOf("\n", start - 1) + 1;
+    const nextBreak = value.indexOf("\n", end);
+    const blockEnd = nextBreak === -1 ? value.length : nextBreak;
+    const block = value.slice(blockStart, blockEnd);
+
+    const removeIndent = (line: string) => {
+      if (line.startsWith("\t")) return line.slice(1);
+      if (line.startsWith("    ")) return line.slice(4);
+      return line;
+    };
+
+    const lines = block.split("\n");
+    const dedented = lines.map(removeIndent).join("\n");
+    apply(value.slice(0, blockStart) + dedented + value.slice(blockEnd));
+
+    const hadSelection = end > start;
+    const caret = hadSelection
+      ? blockStart + dedented.length
+      : Math.max(
+          blockStart,
+          start - (lines[0].length - removeIndent(lines[0]).length),
+        );
+    requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -130,7 +175,7 @@ export default function AddTool() {
       !paramColumn ||
       !paramColumn.name.trim()
     ) {
-      setError("Please fill in all required fields");
+      setError("Please fill in all fields");
       return;
     }
 
@@ -149,6 +194,7 @@ export default function AddTool() {
         param_description: "",
       });
       setSuccess(true);
+      window.scrollTo(0, 0);
       // Reset form
       setFormData({
         tool_description: "",
@@ -172,7 +218,9 @@ export default function AddTool() {
 
   const queryForm = (
     <div className={styles.section}>
-      <p className={styles.sectionHeader}>Example</p>
+      <p className={styles.sectionHeader}>
+        {mode === "table" ? "Example" : "Query"}
+      </p>
       {mode === "table" ? (
         <div className={styles.greyCardList}>
           {formData.query.map((entry, index) => (
@@ -210,6 +258,11 @@ export default function AddTool() {
                   placeholder="e.g. SELECT * FROM users WHERE email = ?"
                   value={entry.query}
                   rows={3}
+                  onKeyDown={(e) =>
+                    handleTabKey(e, entry.query, (next) =>
+                      handleQueryChange(index, "query", next),
+                    )
+                  }
                   onChange={(e) =>
                     handleQueryChange(index, "query", e.target.value)
                   }
@@ -219,30 +272,18 @@ export default function AddTool() {
           ))}
         </div>
       ) : (
-        <>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Description</label>
-            <input
-              className={styles.input}
-              type="text"
-              placeholder="e.g. find user by email"
-              value={formData.query[0].description}
-              onChange={(e) =>
-                handleQueryChange(0, "description", e.target.value)
-              }
-            />
-          </div>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Query</label>
-            <textarea
-              className={styles.textarea}
-              placeholder="e.g. SELECT * FROM users WHERE email = ?"
-              value={formData.query[0].query}
-              rows={3}
-              onChange={(e) => handleQueryChange(0, "query", e.target.value)}
-            />
-          </div>
-        </>
+        <textarea
+          className={styles.textarea}
+          placeholder="e.g. SELECT * FROM users WHERE email = ?"
+          value={formData.query[0].query}
+          rows={3}
+          onKeyDown={(e) =>
+            handleTabKey(e, formData.query[0].query, (next) =>
+              handleQueryChange(0, "query", next),
+            )
+          }
+          onChange={(e) => handleQueryChange(0, "query", e.target.value)}
+        />
       )}
       {mode === "table" && (
         <button type="button" className={styles.addBtn} onClick={addQuery}>
@@ -328,6 +369,20 @@ export default function AddTool() {
 
   return (
     <div className={styles.page}>
+      {success && (
+        <div className={styles.snackbar}>
+          <span className={styles.snackbarText}>
+            Tool has been added successfully! You can now use it in the query.
+          </span>
+          <button
+            type="button"
+            className={styles.snackbarClose}
+            onClick={() => setSuccess(false)}
+          >
+            x
+          </button>
+        </div>
+      )}
       <Header />
 
       <main className={styles.main}>
@@ -355,14 +410,6 @@ export default function AddTool() {
             </button>
           </div>
 
-          {success && (
-            <div className={styles.success}>
-              Tool added successfully! You can now use it in the Query.
-            </div>
-          )}
-
-          {error && <div className={styles.error}>{error}</div>}
-
           <form onSubmit={handleSubmit} className={styles.form}>
             {/* Description */}
             <div className={styles.section}>
@@ -373,6 +420,14 @@ export default function AddTool() {
                   placeholder="Describe what this tool does..."
                   value={formData.tool_description}
                   onChange={(e) => handleInputChange(e, "tool_description")}
+                  onKeyDown={(e) =>
+                    handleTabKey(e, formData.tool_description, (next) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        tool_description: next,
+                      })),
+                    )
+                  }
                   rows={3}
                 />
               </div>
@@ -422,13 +477,16 @@ export default function AddTool() {
             {mode === "table" ? queryForm : columnsForm}
 
             {/* Submit */}
-            <button
-              type="submit"
-              className={styles.submitBtn}
-              disabled={loading}
-            >
-              {loading ? "Adding..." : "Add Tool"}
-            </button>
+            <div className={styles.submitRow}>
+              <button
+                type="submit"
+                className={styles.submitBtn}
+                disabled={loading}
+              >
+                {loading ? "Adding..." : "Add Tool"}
+              </button>
+              {error && <div className={styles.error}>{error}</div>}
+            </div>
           </form>
         </div>
       </main>

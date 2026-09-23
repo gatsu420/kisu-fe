@@ -51,7 +51,7 @@ export default function ListTool() {
 
       <main className={styles.main}>
         <div className={styles.card}>
-          <h2 className={styles.cardTitle}>List Tool</h2>
+          <h2 className={styles.cardTitle}>List Tools</h2>
 
           <div className={styles.tabs}>
             <button
@@ -80,8 +80,7 @@ export default function ListTool() {
 
           {!loading && !error && visibleTool.length === 0 && (
             <p className={styles.emptyState}>
-              No {mode === "query" ? "query" : "table"} tool yet. Add one
-              from the Add Tool page.
+              No tool yet. Add one from the Add Tool page.
             </p>
           )}
 

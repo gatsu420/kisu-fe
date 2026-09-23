@@ -17,12 +17,11 @@ interface Query {
 
 interface FormData {
   tool_description: string;
+  project: string;
+  dataset: string;
   table_name: string;
   columns: Column[];
   query: Query[];
-  param_name: string;
-  param_type: string;
-  param_description: string;
 }
 
 export default function AddTool() {
@@ -31,6 +30,8 @@ export default function AddTool() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Index of the column checked as Param. Its name becomes param_name.
+  const [paramIndex, setParamIndex] = useState<number | null>(null);
 
   const changeMode = (next: ToolType) => {
     setSuccess(false);
@@ -44,12 +45,11 @@ export default function AddTool() {
 
   const [formData, setFormData] = useState<FormData>({
     tool_description: "",
+    project: "",
+    dataset: "",
     table_name: "",
     columns: [{ name: "", type: "", description: "" }],
     query: [{ description: "", query: "" }],
-    param_name: "",
-    param_type: "",
-    param_description: "",
   });
 
   const handleInputChange = (
@@ -80,6 +80,14 @@ export default function AddTool() {
     if (formData.columns.length <= 1) return;
     const newColumns = formData.columns.filter((_, i) => i !== index);
     setFormData((prev) => ({ ...prev, columns: newColumns }));
+    if (paramIndex === index) setParamIndex(null);
+    else if (paramIndex !== null && index < paramIndex) {
+      setParamIndex(paramIndex - 1);
+    }
+  };
+
+  const toggleParam = (index: number, checked: boolean) => {
+    setParamIndex(checked ? index : null);
   };
 
   const handleQueryChange = (
@@ -111,19 +119,18 @@ export default function AddTool() {
     setSuccess(false);
 
     // Validate
-    const missingTableName =
-      mode === "table" && !formData.table_name.trim();
+    const missingTableName = mode === "table" && !formData.table_name.trim();
+    const paramColumn =
+      paramIndex !== null ? formData.columns[paramIndex] : undefined;
     if (
       !formData.tool_description.trim() ||
+      !formData.project.trim() ||
+      !formData.dataset.trim() ||
       missingTableName ||
-      !formData.param_name.trim() ||
-      !formData.param_type.trim()
+      !paramColumn ||
+      !paramColumn.name.trim()
     ) {
-      setError(
-        mode === "table"
-          ? "Please fill in all required fields"
-          : "Please fill in the tool description and parameter fields",
-      );
+      setError("Please fill in all required fields");
       return;
     }
 
@@ -131,25 +138,27 @@ export default function AddTool() {
     try {
       await addTool({
         tool_description: formData.tool_description,
+        project: formData.project,
+        dataset: formData.dataset,
         table_name: mode === "table" ? formData.table_name : "",
         columns: formData.columns,
         type: mode,
         examples: formData.query,
-        param_name: formData.param_name,
-        param_type: formData.param_type,
-        param_description: formData.param_description,
+        param_name: paramColumn.name.trim(),
+        param_type: "",
+        param_description: "",
       });
       setSuccess(true);
       // Reset form
       setFormData({
         tool_description: "",
+        project: "",
+        dataset: "",
         table_name: "",
         columns: [{ name: "", type: "", description: "" }],
         query: [{ description: "", query: "" }],
-        param_name: "",
-        param_type: "",
-        param_description: "",
       });
+      setParamIndex(null);
     } catch (e) {
       if (e instanceof Error && e.message === "unauthorized") {
         navigate("/login");
@@ -162,105 +171,156 @@ export default function AddTool() {
   };
 
   const queryForm = (
-    <div className={styles.formGroup}>
-      <label className={styles.label}>Query</label>
-      {mode === "query" && (
-        <p className={styles.hint}>
-          The query is the source of truth. It can involve a
-          join. No table name is needed.
-        </p>
-      )}
-      {formData.query.map((entry, index) => (
-        <div key={index} className={styles.arrayRow}>
-          <input
-            className={styles.arrayInput}
-            type="text"
-            placeholder="Description"
-            value={entry.description}
-            onChange={(e) =>
-              handleQueryChange(index, "description", e.target.value)
-            }
-          />
-          <input
-            className={styles.arrayInput}
-            type="text"
-            placeholder="SQL query"
-            value={entry.query}
-            onChange={(e) =>
-              handleQueryChange(index, "query", e.target.value)
-            }
-          />
-          {mode === "table" && formData.query.length > 1 && (
-            <button
-              type="button"
-              className={styles.removeBtn}
-              onClick={() => removeQuery(index)}
+    <div className={styles.section}>
+      <p className={styles.sectionHeader}>Example</p>
+      {mode === "table" ? (
+        <div className={styles.greyCardList}>
+          {formData.query.map((entry, index) => (
+            <div
+              key={index}
+              className={`${styles.greyCard} ${styles.exampleCard}`}
             >
-              ×
-            </button>
-          )}
+              {formData.query.length > 1 && (
+                <button
+                  type="button"
+                  className={styles.removeBtn}
+                  onClick={() => removeQuery(index)}
+                >
+                  x
+                </button>
+              )}
+              <div className={styles.formGroup}>
+                <div className={styles.fieldHead}>
+                  <label className={styles.label}>Description</label>
+                </div>
+                <input
+                  className={styles.input}
+                  type="text"
+                  placeholder="e.g. find user by email"
+                  value={entry.description}
+                  onChange={(e) =>
+                    handleQueryChange(index, "description", e.target.value)
+                  }
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Query</label>
+                <textarea
+                  className={styles.textarea}
+                  placeholder="e.g. SELECT * FROM users WHERE email = ?"
+                  value={entry.query}
+                  rows={3}
+                  onChange={(e) =>
+                    handleQueryChange(index, "query", e.target.value)
+                  }
+                />
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      ) : (
+        <>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Description</label>
+            <input
+              className={styles.input}
+              type="text"
+              placeholder="e.g. find user by email"
+              value={formData.query[0].description}
+              onChange={(e) =>
+                handleQueryChange(0, "description", e.target.value)
+              }
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Query</label>
+            <textarea
+              className={styles.textarea}
+              placeholder="e.g. SELECT * FROM users WHERE email = ?"
+              value={formData.query[0].query}
+              rows={3}
+              onChange={(e) => handleQueryChange(0, "query", e.target.value)}
+            />
+          </div>
+        </>
+      )}
       {mode === "table" && (
-        <button
-          type="button"
-          className={styles.addBtn}
-          onClick={addQuery}
-        >
-          + Add Query
+        <button type="button" className={styles.addBtn} onClick={addQuery}>
+          + Add Example
         </button>
       )}
     </div>
   );
 
   const columnsForm = (
-    <div className={styles.formGroup}>
-      <label className={styles.label}>Columns</label>
-      {formData.columns.map((col, index) => (
-        <div key={index} className={styles.arrayRow}>
-          <input
-            className={styles.arrayInput}
-            type="text"
-            placeholder="Name"
-            value={col.name}
-            onChange={(e) =>
-              handleColumnChange(index, "name", e.target.value)
-            }
-          />
-          <input
-            className={styles.arrayInput}
-            type="text"
-            placeholder="Type (e.g. string, int)"
-            value={col.type}
-            onChange={(e) =>
-              handleColumnChange(index, "type", e.target.value)
-            }
-          />
-          <input
-            className={styles.arrayInput}
-            type="text"
-            placeholder="Description"
-            value={col.description}
-            onChange={(e) =>
-              handleColumnChange(index, "description", e.target.value)
-            }
-          />
-          {formData.columns.length > 1 && (
-            <button
-              type="button"
-              className={styles.removeBtn}
-              onClick={() => removeColumn(index)}
-            >
-              ×
-            </button>
-          )}
-        </div>
-      ))}
-      <button
-        type="button"
-        className={styles.addBtn}
-        onClick={addColumn}
-      >
+    <div className={styles.section}>
+      <p className={styles.sectionHeader}>Columns</p>
+      <div className={styles.greyCardList}>
+        {formData.columns.map((col, index) => (
+          <div key={index} className={styles.greyCard}>
+            <div className={styles.formGroup}>
+              <div className={styles.arrayRow}>
+                <span className={styles.arrayLabel}>Name</span>
+                <span className={styles.arrayLabel}>Type</span>
+                <span className={styles.arrayLabelFixed}>Set as param</span>
+                {formData.columns.length > 1 && (
+                  <span className={styles.removeSpacer} />
+                )}
+              </div>
+              <div className={styles.arrayRow}>
+                <input
+                  className={styles.arrayInput}
+                  type="text"
+                  placeholder="e.g. email"
+                  value={col.name}
+                  onChange={(e) =>
+                    handleColumnChange(index, "name", e.target.value)
+                  }
+                />
+                <input
+                  className={styles.arrayInput}
+                  type="text"
+                  placeholder="e.g. string"
+                  value={col.type}
+                  onChange={(e) =>
+                    handleColumnChange(index, "type", e.target.value)
+                  }
+                />
+                <div className={styles.checkCol}>
+                  <input
+                    className={styles.check}
+                    type="checkbox"
+                    checked={paramIndex === index}
+                    onChange={(e) => toggleParam(index, e.target.checked)}
+                  />
+                </div>
+                {formData.columns.length > 1 && (
+                  <button
+                    type="button"
+                    className={styles.removeBtn}
+                    onClick={() => removeColumn(index)}
+                  >
+                    x
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Description</label>
+              <input
+                className={styles.arrayInput}
+                type="text"
+                placeholder="e.g. user email"
+                value={col.description}
+                onChange={(e) =>
+                  handleColumnChange(index, "description", e.target.value)
+                }
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <button type="button" className={styles.addBtn} onClick={addColumn}>
         + Add Column
       </button>
     </div>
@@ -304,80 +364,62 @@ export default function AddTool() {
           {error && <div className={styles.error}>{error}</div>}
 
           <form onSubmit={handleSubmit} className={styles.form}>
-            {/* Tool Description */}
-            <div className={styles.formGroup}>
-              <label className={styles.label}>
-                Tool Description <span className={styles.required}>*</span>
-              </label>
-              <textarea
-                className={styles.textarea}
-                placeholder="Describe what this tool does..."
-                value={formData.tool_description}
-                onChange={(e) => handleInputChange(e, "tool_description")}
-                rows={3}
-              />
-            </div>
-
-            {/* Table Name */}
-            {mode === "table" && (
+            {/* Description */}
+            <div className={styles.section}>
+              <p className={styles.sectionHeader}>Description</p>
               <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  Table Name <span className={styles.required}>*</span>
-                </label>
-                <input
-                  className={styles.input}
-                  type="text"
-                  placeholder="e.g. users"
-                  value={formData.table_name}
-                  onChange={(e) => handleInputChange(e, "table_name")}
+                <textarea
+                  className={styles.textarea}
+                  placeholder="Describe what this tool does..."
+                  value={formData.tool_description}
+                  onChange={(e) => handleInputChange(e, "tool_description")}
+                  rows={3}
                 />
               </div>
-            )}
+            </div>
 
-            {/* Table tab: Columns first. Query tab: Query first. */}
+            {/* Location */}
+            <div className={styles.section}>
+              <p className={styles.sectionHeader}>Location</p>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Project</label>
+                  <input
+                    className={styles.input}
+                    type="text"
+                    placeholder="e.g. my-project"
+                    value={formData.project}
+                    onChange={(e) => handleInputChange(e, "project")}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Dataset</label>
+                  <input
+                    className={styles.input}
+                    type="text"
+                    placeholder="e.g. my_dataset"
+                    value={formData.dataset}
+                    onChange={(e) => handleInputChange(e, "dataset")}
+                  />
+                </div>
+                {mode === "table" && (
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Table Name</label>
+                    <input
+                      className={styles.input}
+                      type="text"
+                      placeholder="e.g. users"
+                      value={formData.table_name}
+                      onChange={(e) => handleInputChange(e, "table_name")}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Table: Columns then Example. Query: Example then Columns. */}
             {mode === "table" ? columnsForm : queryForm}
             {mode === "table" ? queryForm : columnsForm}
-
-            {/* Param Section */}
-            <div className={styles.paramSection}>
-              <h3 className={styles.paramTitle}>Parameter Configuration</h3>
-              <div className={styles.paramRow}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    Param Name <span className={styles.required}>*</span>
-                  </label>
-                  <input
-                    className={styles.input}
-                    type="text"
-                    placeholder="e.g. email"
-                    value={formData.param_name}
-                    onChange={(e) => handleInputChange(e, "param_name")}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    Param Type <span className={styles.required}>*</span>
-                  </label>
-                  <input
-                    className={styles.input}
-                    type="text"
-                    placeholder="e.g. string"
-                    value={formData.param_type}
-                    onChange={(e) => handleInputChange(e, "param_type")}
-                  />
-                </div>
-              </div>
-              <div className={`${styles.formGroup} ${styles.paramDescription}`}>
-                <label className={styles.label}>Param Description</label>
-                <input
-                  className={styles.input}
-                  type="text"
-                  placeholder="Describe the parameter"
-                  value={formData.param_description}
-                  onChange={(e) => handleInputChange(e, "param_description")}
-                />
-              </div>
-            </div>
 
             {/* Submit */}
             <button

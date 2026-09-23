@@ -14,3 +14,8 @@ body {
   color: #1a1a2e;
   background: #fafafa;
 }
+
+:root {
+  --remove-btn-size: 28px;
+  --param-col-w: 6.5rem;
+}

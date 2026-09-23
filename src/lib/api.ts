@@ -33,6 +33,8 @@ export function toolTypeOf(tool: Tool): ToolType {
 
 export interface AddToolPayload {
   tool_description: string;
+  project: string;
+  dataset: string;
   table_name: string;
   columns: { name: string; type: string; description: string }[];
   type: ToolType;
@@ -76,6 +78,8 @@ export interface ToolQueryExample {
 
 export interface Tool {
   tool_description: string;
+  project: string;
+  dataset: string;
   table_name: string;
   columns: ToolColumn[];
   type: ToolType;

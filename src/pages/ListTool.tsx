@@ -116,28 +116,6 @@ function ToolCard({ tool }: ToolCardProps) {
         </div>
       </div>
 
-      {(tool.param_name || tool.param_type) && (
-        <div>
-          <p className={styles.sectionTitle}>Parameter</p>
-          <div className={styles.paramInfoRow}>
-            <div>
-              <p className={styles.paramLabel}>Name</p>
-              <p className={styles.paramValue}>{tool.param_name || "—"}</p>
-            </div>
-            <div>
-              <p className={styles.paramLabel}>Type</p>
-              <p className={styles.paramValue}>{tool.param_type || "—"}</p>
-            </div>
-            {tool.param_description && (
-              <div>
-                <p className={styles.paramLabel}>Description</p>
-                <p className={styles.paramValue}>{tool.param_description}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {tool.columns.length > 0 && (
         <div>
           <p className={styles.sectionTitle}>Columns</p>
@@ -156,7 +134,11 @@ function ToolCard({ tool }: ToolCardProps) {
                     key={i}
                     className={i % 2 === 0 ? styles.trEven : undefined}
                   >
-                    <td className={styles.td}>{col.name}</td>
+                    <td className={styles.td}>
+                      {tool.param_name && col.name === tool.param_name
+                        ? `${col.name} (param)`
+                        : col.name}
+                    </td>
                     <td className={styles.td}>{col.type}</td>
                     <td className={styles.td}>{col.description}</td>
                   </tr>

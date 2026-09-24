@@ -369,26 +369,6 @@
   margin: 0.35rem 0 0;
 }
 
-.paramInfoRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-}
-
-.paramLabel {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #9ca3af;
-  margin: 0 0 0.15rem;
-}
-
-.paramValue {
-  font-size: 0.875rem;
-  color: #374151;
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
 .sectionTitle {
   font-size: 0.75rem;
   font-weight: 600;

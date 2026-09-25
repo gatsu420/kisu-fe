@@ -24,11 +24,21 @@ export async function fetchAnswer(
   return res.json();
 }
 
+export type ToolType = "table" | "query";
+
+// Legacy rows may have an empty type. Treat them as table tools.
+export function toolTypeOf(tool: Tool): ToolType {
+  return tool.type === "query" ? "query" : "table";
+}
+
 export interface AddToolPayload {
   tool_description: string;
+  project: string;
+  dataset: string;
   table_name: string;
   columns: { name: string; type: string; description: string }[];
-  query_examples: { description: string; query: string }[];
+  type: ToolType;
+  examples: { description: string; query: string }[];
   param_name: string;
   param_type: string;
   param_description: string;
@@ -68,9 +78,12 @@ export interface ToolQueryExample {
 
 export interface Tool {
   tool_description: string;
+  project: string;
+  dataset: string;
   table_name: string;
   columns: ToolColumn[];
-  query_examples: ToolQueryExample[];
+  type: ToolType;
+  examples: ToolQueryExample[];
   param_name: string;
   param_type: string;
   param_description: string;

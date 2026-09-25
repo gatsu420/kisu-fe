@@ -67,7 +67,7 @@
   outline: none;
   transition: border-color 0.15s;
   resize: vertical;
-  min-height: 5rem;
+  min-height: 8rem;
 }
 
 .setupInputTextarea:focus {

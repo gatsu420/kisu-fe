@@ -188,30 +188,28 @@ function ToolCard({ tool }: ToolCardProps) {
       </div>
     ) : null;
 
+  const title =
+    tool.tool_description || `${tool.project}.${tool.dataset}`;
+
   return (
-    <div className={styles.toolCard}>
-      <div className={styles.toolHeader}>
-        <div>
-          {tool.tool_description && (
-            <p className={styles.toolDescription}>{tool.tool_description}</p>
-          )}
-        </div>
+    <details className={styles.toolItem}>
+      <summary className={styles.collapsibleTitle}>{title}</summary>
+      <div className={styles.toolCardBody}>
+        {locationSection}
+
+        {type === "table" ? (
+          <>
+            {columnsSection}
+            {examplesSection}
+          </>
+        ) : (
+          <>
+            {examplesSection}
+            {columnsSection}
+          </>
+        )}
       </div>
-
-      {locationSection}
-
-      {type === "table" ? (
-        <>
-          {columnsSection}
-          {examplesSection}
-        </>
-      ) : (
-        <>
-          {examplesSection}
-          {columnsSection}
-        </>
-      )}
-    </div>
+    </details>
   );
 }
 

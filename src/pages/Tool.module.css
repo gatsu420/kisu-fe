@@ -12,17 +12,16 @@
   max-width: 960px;
   width: 100%;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
 }
 
 .card {
-  background: white;
-  border-radius: 10px;
+  flex: 1;
+  background: #ffffff;
   padding: 2rem;
-  border: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;

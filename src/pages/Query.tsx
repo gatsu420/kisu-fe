@@ -25,6 +25,12 @@ export default function Query() {
   const [message, setMessage] = useState<Message | null>(null);
   const [loading, setLoading] = useState(false);
   const promptRef = useRef<HTMLTextAreaElement>(null);
+  const valueRefs = useRef<Array<HTMLParagraphElement | null>>([]);
+  const [clipped, setClipped] = useState<boolean[]>([false, false]);
+  const [fullValue, setFullValue] = useState<{
+    label: string;
+    value: string;
+  } | null>(null);
   const navigate = useNavigate();
 
   const paramLocked = param.length > 0 && filter.length > 0;
@@ -32,6 +38,24 @@ export default function Query() {
   useEffect(() => {
     if (paramLocked) promptRef.current?.focus();
   }, [paramLocked]);
+
+  // Show "See more" only when the value needs more than 5 lines.
+  useEffect(() => {
+    setClipped(
+      valueRefs.current.map((el) =>
+        el ? el.scrollHeight > el.clientHeight + 1 : false,
+      ),
+    );
+  }, [param, filter, paramLocked]);
+
+  useEffect(() => {
+    if (!fullValue) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") setFullValue(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullValue]);
 
   const handleSetParam = (e: FormEvent) => {
     e.preventDefault();
@@ -41,6 +65,15 @@ export default function Query() {
       setParam(trimmedParam);
       setFilter(trimmedFilter);
     }
+  };
+
+  const handleReset = () => {
+    setParam("");
+    setParamDraft("");
+    setFilter("");
+    setFilterDraft("");
+    setPrompt("");
+    setMessage(null);
   };
 
   const handleAsk = async () => {
@@ -83,103 +116,172 @@ export default function Query() {
           {/* Param setup */}
           {!paramLocked ? (
             <form onSubmit={handleSetParam} className={styles.setupCard}>
-            <p className={styles.setupLabel}>Find these records ...</p>
-            <div className={styles.setupRow}>
-              <textarea
-                className={styles.setupInputTextarea}
-                placeholder="e.g. alice@example.com"
-                value={paramDraft}
-                onChange={(e) => setParamDraft(e.target.value)}
-                rows={3}
-                autoFocus
-              />
-              <p
-                className={styles.setupLabel}
-              >
-                ... on this column
-              </p>
-              <input
-                className={styles.setupInput}
-                placeholder="e.g. email"
-                value={filterDraft}
-                onChange={(e) => setFilterDraft(e.target.value)}
-              />
-              <button
-                type="submit"
-                className={styles.setupBtn}
-                style={{
-                  opacity: paramDraft.trim() && filterDraft.trim() ? 1 : 0.5,
-                }}
-                disabled={!paramDraft.trim() || !filterDraft.trim()}
-              >
-                Set
-              </button>
-            </div>
-          </form>
+              <div className={styles.setupRow}>
+                <div className={styles.setupField}>
+                  <p className={styles.setupLabel}>Find these records ...</p>
+                  <textarea
+                    className={styles.setupInputTextarea}
+                    placeholder="e.g. alice@example.com"
+                    value={paramDraft}
+                    onChange={(e) => setParamDraft(e.target.value)}
+                    rows={3}
+                    autoFocus
+                  />
+                </div>
+                <div className={styles.setupField}>
+                  <p className={styles.setupLabel}>... on this column</p>
+                  <input
+                    className={styles.setupInput}
+                    placeholder="e.g. email"
+                    value={filterDraft}
+                    onChange={(e) => setFilterDraft(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className={styles.setupSubmit}>
+                <button
+                  type="submit"
+                  className={styles.setupBtn}
+                  style={{
+                    opacity: paramDraft.trim() && filterDraft.trim() ? 1 : 0.5,
+                  }}
+                  disabled={!paramDraft.trim() || !filterDraft.trim()}
+                >
+                  Set
+                </button>
+              </div>
+            </form>
           ) : (
             <>
-            {/* Info cards */}
-            <div className={styles.infoCards}>
-              <div className={styles.infoCard}>
-                <div className={styles.infoCardHeader}>
-                  <p className={styles.infoCardLabel}>Find these records:</p>
+              <div className={styles.rows}>
+                {/* Info cards */}
+                <div className={styles.infoCards}>
+                  <div className={styles.infoCard}>
+                    <p className={styles.infoCardLabel}>Find these records</p>
+                    <p
+                      className={styles.infoCardValue}
+                      ref={(el) => {
+                        valueRefs.current[0] = el;
+                      }}
+                    >
+                      {param}
+                    </p>
+                    {clipped[0] && (
+                      <button
+                        type="button"
+                        className={styles.seeMore}
+                        onClick={() =>
+                          setFullValue({
+                            label: "Find these records ...",
+                            value: param,
+                          })
+                        }
+                      >
+                        See more
+                      </button>
+                    )}
+                  </div>
+                  <div className={styles.infoCard}>
+                    <p className={styles.infoCardLabel}>
+                      {"on this column "}
+                      <span className={styles.paren}>(</span>
+                      <button
+                        type="button"
+                        className={styles.resetLink}
+                        onClick={handleReset}
+                      >
+                        reset
+                      </button>
+                      <span className={styles.paren}>)</span>
+                    </p>
+                    <p
+                      className={styles.infoCardValue}
+                      ref={(el) => {
+                        valueRefs.current[1] = el;
+                      }}
+                    >
+                      {filter}
+                    </p>
+                    {clipped[1] && (
+                      <button
+                        type="button"
+                        className={styles.seeMore}
+                        onClick={() =>
+                          setFullValue({
+                            label: "On this column",
+                            value: filter,
+                          })
+                        }
+                      >
+                        See more
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Input bar */}
+                <div className={styles.inputBar}>
+                  <textarea
+                    ref={promptRef}
+                    className={styles.promptInput}
+                    placeholder="What do you want to know?"
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onKeyDown={handlePromptKey}
+                    rows={1}
+                  />
                   <button
-                    className={styles.infoCardAction}
-                    onClick={() => {
-                      setParam("");
-                      setParamDraft("");
-                      setFilter("");
-                      setFilterDraft("");
-                      setMessage(null);
-                    }}
+                    className={styles.askBtn}
+                    style={{ opacity: loading || !prompt.trim() ? 0.5 : 1 }}
+                    onClick={handleAsk}
+                    disabled={loading || !prompt.trim()}
                   >
-                    change
+                    {loading ? "..." : "Get Answer"}
                   </button>
                 </div>
-                <p className={styles.infoCardValue}>{param}</p>
-              </div>
-              <div className={styles.infoCard}>
-                <p className={styles.infoCardLabel}>on this column:</p>
-                <p className={styles.infoCardValue}>{filter}</p>
-              </div>
-            </div>
 
-            {/* Input bar */}
-            <div className={styles.inputBar}>
-              <textarea
-                ref={promptRef}
-                className={styles.promptInput}
-                placeholder="What do you want to know?"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={handlePromptKey}
-                rows={1}
-              />
-              <button
-                className={styles.askBtn}
-                style={{ opacity: loading || !prompt.trim() ? 0.5 : 1 }}
-                onClick={handleAsk}
-                disabled={loading || !prompt.trim()}
-              >
-                {loading ? "..." : "Ask"}
-              </button>
-            </div>
-
-            {/* Result table */}
-            <div className={styles.tableContainer}>
-              {message === null ? (
-                <p className={styles.emptyTable}>
-                  Ask a question above to see results.
-                </p>
-              ) : message.error ? (
-                <p className={styles.error}>{message.error}</p>
-              ) : message.result !== undefined ? (
-                <ResultTable data={message.result} />
-              ) : (
-                <p className={styles.thinking}>Thinking...</p>
-              )}
-            </div>
+                {/* Result table */}
+                <div className={styles.tableContainer}>
+                  {message === null ? (
+                    <p className={styles.emptyTable}>
+                      Ask a question above to see results.
+                    </p>
+                  ) : message.error ? (
+                    <p className={styles.error}>{message.error}</p>
+                  ) : message.result !== undefined ? (
+                    <ResultTable data={message.result} />
+                  ) : (
+                    <p className={styles.thinking}>Thinking...</p>
+                  )}
+                </div>
+              </div>
             </>
+          )}
+          {fullValue && (
+            <div
+              className={styles.modalOverlay}
+              onClick={() => setFullValue(null)}
+            >
+              <div
+                className={styles.modal}
+                role="dialog"
+                aria-modal="true"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className={styles.modalHeader}>
+                  <p className={styles.infoCardLabel}>{fullValue.label}</p>
+                  <button
+                    type="button"
+                    className={styles.modalClose}
+                    aria-label="Close"
+                    onClick={() => setFullValue(null)}
+                  >
+                    x
+                  </button>
+                </div>
+                <p className={styles.modalValue}>{fullValue.value}</p>
+              </div>
+            </div>
           )}
         </div>
       </main>

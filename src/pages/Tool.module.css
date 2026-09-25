@@ -140,11 +140,13 @@
 
 .formRow {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .formRow .formGroup {
-  flex: 1;
+  /* Fixed 3-column slot so fields line up the same
+     in table and query tools, like .locationRow. */
+  flex: 0 0 calc((100% - 3rem) / 3);
 }
 
 .fieldHead {
@@ -181,6 +183,24 @@
   min-height: 5rem;
   font-family: inherit;
   tab-size: 4;
+}
+
+/* Query input in Add Tool: same look as query boxes in List Tools. */
+.queryArea {
+  composes: textarea;
+  background: #ffffff;
+  color: #1a1a2e;
+  border-color: #d1d5db;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  /* 15 rows + padding + border, then scroll */
+  min-height: calc(10 * 1.5em + 1.25rem + 2px);
+  overflow: auto;
+}
+
+.queryArea::placeholder {
+  color: #9ca3af;
 }
 
 .arrayInput {
@@ -355,18 +375,50 @@
   gap: 1rem;
 }
 
-.toolTable {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1a1a2e;
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
 .toolDescription {
   font-size: 0.9rem;
   color: #4b5563;
   margin: 0.35rem 0 0;
+}
+
+.toolDescription {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.locationList {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+}
+
+.locationRow {
+  display: flex;
+  flex-direction: column;
+  /* Fixed 3-column slot so Project/Dataset line up
+     the same in table and query tool cards. */
+  flex: 0 0 calc((100% - 3rem) / 3);
+  gap: 0.15rem;
+  font-size: 0.8125rem;
+  margin: 0;
+  min-width: 0;
+}
+
+.locationLabel {
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.locationValue {
+  color: #374151;
+  font-family: inherit;
+  word-break: break-all;
 }
 
 .sectionTitle {
@@ -415,6 +467,49 @@
   gap: 0.75rem;
 }
 
+.collapsible {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f9fafb;
+}
+
+.collapsibleTitle {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #374151;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.collapsibleTitle::-webkit-details-marker {
+  display: none;
+}
+
+.collapsibleTitle::before {
+  content: ">";
+  color: #9ca3af;
+  font-size: 0.75rem;
+  transition: transform 0.15s;
+}
+
+.collapsible[open] > .collapsibleTitle::before {
+  transform: rotate(90deg);
+}
+
+.collapsible .codeBlock {
+  margin: 0 0.5rem 0.5rem;
+}
+
+/* Shiki output sits inside .codeBlock. Keep our box look. */
+.codeBlock .shiki {
+  margin: 0;
+  padding: 0;
+  background-color: transparent !important;
+}
+
 .example {
   display: flex;
   flex-direction: column;
@@ -431,10 +526,14 @@
   margin: 0;
   padding: 0.75rem;
   font-size: 0.8125rem;
-  background: #1a1a2e;
-  color: #e5e7eb;
+  line-height: 1.5;
+  /* 15 lines max, then scroll */
+  max-height: calc(15 * 1.5em);
+  overflow: auto;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #e5e7eb;
   border-radius: 6px;
-  overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-word;
 }

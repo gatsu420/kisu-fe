@@ -254,10 +254,10 @@ export default function AddTool() {
               <div className={styles.formGroup}>
                 <label className={styles.label}>Query</label>
                 <textarea
-                  className={styles.textarea}
+                  className={styles.queryArea}
                   placeholder="e.g. SELECT * FROM users WHERE email = ?"
                   value={entry.query}
-                  rows={3}
+                  rows={15}
                   onKeyDown={(e) =>
                     handleTabKey(e, entry.query, (next) =>
                       handleQueryChange(index, "query", next),
@@ -273,10 +273,10 @@ export default function AddTool() {
         </div>
       ) : (
         <textarea
-          className={styles.textarea}
+          className={styles.queryArea}
           placeholder="e.g. SELECT * FROM users WHERE email = ?"
           value={formData.query[0].query}
-          rows={3}
+          rows={15}
           onKeyDown={(e) =>
             handleTabKey(e, formData.query[0].query, (next) =>
               handleQueryChange(0, "query", next),

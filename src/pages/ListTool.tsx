@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchTool, toolTypeOf, type Tool, type ToolType } from "../lib/api";
+import { highlightSql } from "../lib/highlight";
 import Header from "../components/Header";
 import styles from "./Tool.module.css";
 
@@ -102,70 +103,139 @@ interface ToolCardProps {
 }
 
 function ToolCard({ tool }: ToolCardProps) {
-  const title = tool.table_name || tool.tool_description || "(untitled tool)";
-  const showDescription = Boolean(tool.table_name && tool.tool_description);
+  const type = toolTypeOf(tool);
 
-  return (
-    <div className={styles.toolCard}>
-      <div className={styles.toolHeader}>
-        <div>
-          <h3 className={styles.toolTable}>{title}</h3>
-          {showDescription && (
-            <p className={styles.toolDescription}>{tool.tool_description}</p>
-          )}
+  const locationSection = (
+    <div>
+      <p className={styles.sectionTitle}>Location</p>
+      <div className={styles.locationList}>
+        <p className={styles.locationRow}>
+          <span className={styles.locationLabel}>Project</span>
+          <span className={styles.locationValue}>{tool.project}</span>
+        </p>
+        <p className={styles.locationRow}>
+          <span className={styles.locationLabel}>Dataset</span>
+          <span className={styles.locationValue}>{tool.dataset}</span>
+        </p>
+        {type === "table" && (
+          <p className={styles.locationRow}>
+            <span className={styles.locationLabel}>Table Name</span>
+            <span className={styles.locationValue}>{tool.table_name}</span>
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
+  const columnsSection =
+    tool.columns.length > 0 ? (
+      <div>
+        <p className={styles.sectionTitle}>Columns</p>
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.th}>Name</th>
+                <th className={styles.th}>Type</th>
+                <th className={styles.th}>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tool.columns.map((col, i) => (
+                <tr key={i} className={i % 2 === 0 ? styles.trEven : undefined}>
+                  <td className={styles.td}>
+                    {tool.param_name && col.name === tool.param_name
+                      ? `${col.name} (param)`
+                      : col.name}
+                  </td>
+                  <td className={styles.td}>{col.type}</td>
+                  <td className={styles.td}>{col.description}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
+    ) : null;
 
-      {tool.columns.length > 0 && (
-        <div>
-          <p className={styles.sectionTitle}>Columns</p>
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.th}>Name</th>
-                  <th className={styles.th}>Type</th>
-                  <th className={styles.th}>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tool.columns.map((col, i) => (
-                  <tr
-                    key={i}
-                    className={i % 2 === 0 ? styles.trEven : undefined}
-                  >
-                    <td className={styles.td}>
-                      {tool.param_name && col.name === tool.param_name
-                        ? `${col.name} (param)`
-                        : col.name}
-                    </td>
-                    <td className={styles.td}>{col.type}</td>
-                    <td className={styles.td}>{col.description}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {tool.examples.length > 0 && (
-        <div>
-          <p className={styles.sectionTitle}>Query</p>
-          <div className={styles.exampleList}>
-            {tool.examples.map((example, i) => (
+  const examplesSection =
+    tool.examples.length > 0 ? (
+      <div>
+        <p className={styles.sectionTitle}>
+          {type === "table" ? "Example" : "Query"}
+        </p>
+        <div className={styles.exampleList}>
+          {tool.examples.map((example, i) =>
+            type === "table" ? (
+              <details key={i} className={styles.collapsible}>
+                <summary className={styles.collapsibleTitle}>
+                  {example.description || `Example ${i + 1}`}
+                </summary>
+                <HighlightedCode code={example.query} />
+              </details>
+            ) : (
               <div key={i} className={styles.example}>
                 {example.description && (
                   <p className={styles.exampleDescription}>
                     {example.description}
                   </p>
                 )}
-                <pre className={styles.codeBlock}>{example.query}</pre>
+                <HighlightedCode code={example.query} />
               </div>
-            ))}
-          </div>
+            ),
+          )}
         </div>
+      </div>
+    ) : null;
+
+  return (
+    <div className={styles.toolCard}>
+      <div className={styles.toolHeader}>
+        <div>
+          {tool.tool_description && (
+            <p className={styles.toolDescription}>{tool.tool_description}</p>
+          )}
+        </div>
+      </div>
+
+      {locationSection}
+
+      {type === "table" ? (
+        <>
+          {columnsSection}
+          {examplesSection}
+        </>
+      ) : (
+        <>
+          {examplesSection}
+          {columnsSection}
+        </>
       )}
     </div>
   );
+}
+
+function HighlightedCode({ code }: { code: string }) {
+  const [html, setHtml] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    highlightSql(code).then((result) => {
+      if (active) setHtml(result);
+    });
+    return () => {
+      active = false;
+    };
+  }, [code]);
+
+  if (html) {
+    return (
+      <div
+        className={styles.codeBlock}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
+  }
+
+  return <div className={styles.codeBlock}>{code}</div>;
 }

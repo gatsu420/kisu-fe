@@ -162,7 +162,7 @@ function ToolCard({ tool }: ToolCardProps) {
     tool.examples.length > 0 ? (
       <div>
         <p className={styles.sectionTitle}>
-          {type === "table" ? "Example" : "Query"}
+          {type === "table" ? "Examples" : "Query"}
         </p>
         <div className={styles.exampleList}>
           {tool.examples.map((example, i) =>
@@ -188,8 +188,7 @@ function ToolCard({ tool }: ToolCardProps) {
       </div>
     ) : null;
 
-  const title =
-    tool.tool_description || `${tool.project}.${tool.dataset}`;
+  const title = tool.tool_description || `${tool.project}.${tool.dataset}`;
 
   return (
     <details className={styles.toolItem}>

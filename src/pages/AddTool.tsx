@@ -326,7 +326,7 @@ export default function AddTool() {
           {formData.query.map((entry, index) => (
             <div
               key={index}
-              className={`${styles.greyCard} ${styles.exampleCard}`}
+              className={`${styles.greyCard} ${styles.exampleCards}`}
             >
               {formData.query.length > 1 && (
                 <button

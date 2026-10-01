@@ -141,6 +141,13 @@
   white-space: nowrap;
 }
 
+.fillBtnWide {
+  /* Fits "Autofill description and columns" with a constant width. */
+  width: 15rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .sectionHeader {
   font-size: 1rem;
   font-weight: 600;
@@ -380,6 +387,7 @@
 .verifyRow {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.75rem;
 }
 
@@ -398,11 +406,6 @@
 
 .verifyOk {
   color: #16a34a;
-  font-weight: 600;
-}
-
-.verifyBad {
-  color: #dc2626;
   font-weight: 600;
 }
 

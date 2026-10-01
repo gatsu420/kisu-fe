@@ -53,7 +53,7 @@ export async function validateToolQuery(query: string): Promise<boolean> {
   return (data as { is_valid: boolean }).is_valid;
 }
 
-export interface ToolTableSchemaArgs {
+interface ToolTableMetadataArgs {
   type: ToolType;
   project: string;
   dataset: string;
@@ -61,10 +61,18 @@ export interface ToolTableSchemaArgs {
   builder_query: string;
 }
 
-export async function fetchToolTableSchema(
-  args: ToolTableSchemaArgs,
-): Promise<ToolColumn[]> {
-  const url = new URL("/answer/v1/get-tool-table-schema", window.location.origin);
+interface ToolTableMetadata {
+  description: string;
+  columns: ToolColumn[];
+}
+
+export async function fetchToolTableMetadata(
+  args: ToolTableMetadataArgs,
+): Promise<ToolTableMetadata> {
+  const url = new URL(
+    "/answer/v1/get-tool-table-metadata",
+    window.location.origin,
+  );
   url.searchParams.set("type", args.type);
   url.searchParams.set("project", args.project);
   url.searchParams.set("dataset", args.dataset);
@@ -81,18 +89,24 @@ export async function fetchToolTableSchema(
   }
 
   if (!res.ok) {
-    throw new Error("schema request failed");
+    throw new Error("metadata request failed");
   }
 
   const data: unknown = await res.json();
-  const columns =
-    typeof data === "object" && data !== null && "columns" in data
-      ? (data as { columns: unknown }).columns
-      : null;
-  if (!Array.isArray(columns)) {
-    throw new Error("schema response is invalid");
+  if (typeof data !== "object" || data === null || !("columns" in data)) {
+    throw new Error("metadata response is invalid");
   }
-  return columns as ToolColumn[];
+  const { columns, description } = data as {
+    columns?: unknown;
+    description?: unknown;
+  };
+  if (!Array.isArray(columns)) {
+    throw new Error("metadata response is invalid");
+  }
+  return {
+    description: typeof description === "string" ? description : "",
+    columns: columns as ToolColumn[],
+  };
 }
 
 export type ToolType = "table" | "query";
@@ -102,7 +116,7 @@ export function toolTypeOf(tool: Tool): ToolType {
   return tool.type === "query" ? "query" : "table";
 }
 
-export interface AddToolPayload {
+interface AddToolPayload {
   tool_description: string;
   project: string;
   dataset: string;
@@ -136,13 +150,13 @@ export async function addTool(payload: AddToolPayload): Promise<string> {
   return res.text();
 }
 
-export interface ToolColumn {
+interface ToolColumn {
   name: string;
   type: string;
   description: string;
 }
 
-export interface ToolQueryExamples {
+interface ToolQueryExamples {
   description: string;
   query: string;
 }

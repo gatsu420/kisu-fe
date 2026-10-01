@@ -53,6 +53,48 @@ export async function validateToolQuery(query: string): Promise<boolean> {
   return (data as { is_valid: boolean }).is_valid;
 }
 
+export interface ToolTableSchemaArgs {
+  type: ToolType;
+  project: string;
+  dataset: string;
+  table_name: string;
+  builder_query: string;
+}
+
+export async function fetchToolTableSchema(
+  args: ToolTableSchemaArgs,
+): Promise<ToolColumn[]> {
+  const url = new URL("/answer/v1/get-tool-table-schema", window.location.origin);
+  url.searchParams.set("type", args.type);
+  url.searchParams.set("project", args.project);
+  url.searchParams.set("dataset", args.dataset);
+  url.searchParams.set("table_name", args.table_name);
+  url.searchParams.set("builder_query", args.builder_query);
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+
+  if (!res.ok) {
+    throw new Error("schema request failed");
+  }
+
+  const data: unknown = await res.json();
+  const columns =
+    typeof data === "object" && data !== null && "columns" in data
+      ? (data as { columns: unknown }).columns
+      : null;
+  if (!Array.isArray(columns)) {
+    throw new Error("schema response is invalid");
+  }
+  return columns as ToolColumn[];
+}
+
 export type ToolType = "table" | "query";
 
 // Legacy rows may have an empty type. Treat them as table tools.

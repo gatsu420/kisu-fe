@@ -124,6 +124,17 @@
   gap: 0.5rem;
 }
 
+.fillRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fillBtn {
+  width: 5rem;
+  text-align: center;
+}
+
 .sectionHeader {
   font-size: 1rem;
   font-weight: 600;

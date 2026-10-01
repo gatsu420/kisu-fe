@@ -1,6 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { addTool, validateToolQuery, type ToolType } from "../lib/api";
+import {
+  addTool,
+  fetchToolTableSchema,
+  validateToolQuery,
+  type ToolType,
+} from "../lib/api";
 import Header from "../components/Header";
 import styles from "./Tool.module.css";
 
@@ -36,10 +41,13 @@ export default function AddTool() {
   const [error, setError] = useState<string | null>(null);
   // Index of the column checked as Param. Its name becomes param_name.
   const [paramIndex, setParamIndex] = useState<number | null>(null);
+  const [filling, setFilling] = useState(false);
+  const [fillError, setFillError] = useState<string | null>(null);
 
   const changeMode = (next: ToolType) => {
     setSuccess(false);
     setError(null);
+    setFillError(null);
     if (next === "query") {
       // Query mode allows only one query.
       setFormData((prev) => ({ ...prev, query: prev.query.slice(0, 1) }));
@@ -92,6 +100,37 @@ export default function AddTool() {
 
   const toggleParam = (index: number, checked: boolean) => {
     setParamIndex(checked ? index : null);
+  };
+
+  // Ask the backend for the table schema and auto fill the column rows.
+  const autoFillColumns = async () => {
+    if (filling) return;
+    setFillError(null);
+    setFilling(true);
+    try {
+      const columns = await fetchToolTableSchema({
+        type: mode,
+        project: formData.project.trim(),
+        dataset: formData.dataset.trim(),
+        table_name: formData.table_name.trim(),
+        builder_query: formData.query[0]?.query ?? "",
+      });
+      if (columns.length === 0) {
+        setFillError("No columns found");
+        return;
+      }
+      setFormData((prev) => ({ ...prev, columns }));
+      // Old param index no longer matches the new rows.
+      setParamIndex(null);
+    } catch (e) {
+      if (e instanceof Error && e.message === "unauthorized") {
+        navigate("/login");
+        return;
+      }
+      setFillError("Failed to autofill columns");
+    } finally {
+      setFilling(false);
+    }
   };
 
   const handleQueryChange = (
@@ -305,6 +344,7 @@ export default function AddTool() {
         query: [{ description: "", query: "", status: "unverified" }],
       });
       setParamIndex(null);
+      setFillError(null);
     } catch (e) {
       if (e instanceof Error && e.message === "unauthorized") {
         navigate("/login");
@@ -400,6 +440,17 @@ export default function AddTool() {
   const columnsForm = (
     <div className={styles.section}>
       <p className={styles.sectionHeader}>Columns</p>
+      <div className={styles.fillRow}>
+        <button
+          type="button"
+          className={`${styles.addBtn} ${styles.fillBtn}`}
+          onClick={autoFillColumns}
+          disabled={filling}
+        >
+          {filling ? "Filling..." : "Autofill"}
+        </button>
+        {fillError && <span className={styles.error}>{fillError}</span>}
+      </div>
       <div className={styles.greyCardList}>
         {formData.columns.map((col, index) => (
           <div key={index} className={styles.greyCard}>

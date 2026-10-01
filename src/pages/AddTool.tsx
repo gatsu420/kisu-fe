@@ -276,7 +276,7 @@ export default function AddTool() {
       <div className={styles.verifyRow}>
         <button
           type="button"
-          className={styles.verifyBtn}
+          className={`${styles.actionBtn} ${styles.verifyBtn}`}
           onClick={() => verifyQuery(index)}
           disabled={status === "checking"}
         >
@@ -430,7 +430,7 @@ export default function AddTool() {
         </>
       )}
       {mode === "table" && (
-        <button type="button" className={styles.addBtn} onClick={addQuery}>
+        <button type="button" className={styles.actionBtn} onClick={addQuery}>
           + Add Example
         </button>
       )}
@@ -443,11 +443,11 @@ export default function AddTool() {
       <div className={styles.fillRow}>
         <button
           type="button"
-          className={`${styles.addBtn} ${styles.fillBtn}`}
+          className={`${styles.actionBtn} ${styles.fillBtn}`}
           onClick={autoFillColumns}
           disabled={filling}
         >
-          {filling ? "Filling..." : "Autofill"}
+          {filling ? "Autofilling..." : "Autofill"}
         </button>
         {fillError && <span className={styles.error}>{fillError}</span>}
       </div>
@@ -516,7 +516,7 @@ export default function AddTool() {
           </div>
         ))}
       </div>
-      <button type="button" className={styles.addBtn} onClick={addColumn}>
+      <button type="button" className={styles.actionBtn} onClick={addColumn}>
         + Add Column
       </button>
     </div>

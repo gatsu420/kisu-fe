@@ -124,9 +124,7 @@ interface AddToolPayload {
   columns: { name: string; type: string; description: string }[];
   type: ToolType;
   examples: { description: string; query: string }[];
-  param_name: string;
-  param_type: string;
-  param_description: string;
+  param_names: string[];
 }
 
 export async function addTool(payload: AddToolPayload): Promise<string> {
@@ -169,9 +167,7 @@ export interface Tool {
   columns: ToolColumn[];
   type: ToolType;
   examples: ToolQueryExamples[];
-  param_name: string;
-  param_type: string;
-  param_description: string;
+  param_names: string[];
 }
 
 export async function fetchTool(): Promise<Tool[]> {

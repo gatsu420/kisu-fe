@@ -1,12 +1,12 @@
 export async function fetchAnswer(
   prompt: string,
-  param: string,
-  filter: string,
+  paramValue: string,
+  paramName: string,
 ): Promise<unknown> {
   const url = new URL("/answer/v1/answer", window.location.origin);
   url.searchParams.set("prompt", prompt);
-  url.searchParams.set("param", param);
-  url.searchParams.set("filter", filter);
+  url.searchParams.set("param_value", paramValue);
+  url.searchParams.set("param_name", paramName);
 
   const res = await fetch(url.toString(), {
     method: "GET",

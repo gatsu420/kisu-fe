@@ -254,17 +254,25 @@
 }
 
 .modalClose {
-  background: none;
+  background: #f3f4f6;
   border: none;
   padding: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   font-size: 1.1rem;
   line-height: 1;
-  color: #6b7280;
+  color: #374151;
   cursor: pointer;
+  transition: background 0.15s;
 }
 
 .modalClose:hover {
-  color: #374151;
+  background: #e5e7eb;
 }
 
 .modalValue {
@@ -289,6 +297,7 @@
   top: calc(100% + 0.35rem);
   left: 0;
   min-width: 14rem;
+  width: max-content;
   padding: 0.25rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
@@ -300,6 +309,7 @@
 .saveMenuItem {
   display: block;
   width: 100%;
+  white-space: nowrap;
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   color: #374151;

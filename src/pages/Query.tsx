@@ -40,6 +40,8 @@ export default function Query() {
     label: string;
     value: string;
   } | null>(null);
+  const [resetTarget, setResetTarget] = useState<"value" | "name" | null>(null);
+  const [resetDraft, setResetDraft] = useState("");
   const navigate = useNavigate();
 
   const paramLocked = paramValue.length > 0 && paramName.length > 0;
@@ -72,6 +74,16 @@ export default function Query() {
     return () => window.removeEventListener("keydown", onKey);
   }, [fullValue]);
 
+  // Close the param reset popup with Escape.
+  useEffect(() => {
+    if (!resetTarget) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") setResetTarget(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [resetTarget]);
+
   // Close the Save result menu when clicking outside it.
   useEffect(() => {
     if (!saveOpen) return;
@@ -94,17 +106,20 @@ export default function Query() {
     }
   };
 
-  const handleReset = () => {
-    setParamValue("");
-    setParamValueDraft("");
-    setParamName("");
-    setParamNameDraft("");
-    setPrompt("");
-    setMessage(null);
-    setUploadUrl(null);
-    setUploadError(null);
-    setResultTab("answer");
-    setSaveOpen(false);
+  // Open the popup that changes one param, without leaving this page.
+  const openReset = (target: "value" | "name") => {
+    setResetDraft(target === "value" ? paramValue : paramName);
+    setResetTarget(target);
+  };
+
+  const handleResetSave = (e: FormEvent) => {
+    e.preventDefault();
+    const nextValue = resetDraft.trim();
+    if (!nextValue || !resetTarget) return;
+    if (resetTarget === "value") setParamValue(nextValue);
+    else setParamName(nextValue);
+    setResetDraft("");
+    setResetTarget(null);
   };
 
   const handleAsk = async () => {
@@ -178,7 +193,7 @@ export default function Query() {
               target="_blank"
               rel="noreferrer"
             >
-              Open in Drive
+              Open in Google Drive
             </a>
           </span>
           <button
@@ -240,7 +255,17 @@ export default function Query() {
                 {/* Info cards */}
                 <div className={styles.infoCards}>
                   <div className={styles.infoCard}>
-                    <p className={styles.infoCardLabel}>Find these records</p>
+                    <p className={styles.infoCardLabel}>
+                      Find these records <span className={styles.paren}>(</span>
+                      <button
+                        type="button"
+                        className={styles.resetLink}
+                        onClick={() => openReset("value")}
+                      >
+                        reset
+                      </button>
+                      <span className={styles.paren}>)</span>
+                    </p>
                     <p
                       className={styles.infoCardValue}
                       ref={(el) => {
@@ -271,7 +296,7 @@ export default function Query() {
                       <button
                         type="button"
                         className={styles.resetLink}
-                        onClick={handleReset}
+                        onClick={() => openReset("name")}
                       >
                         reset
                       </button>
@@ -373,7 +398,7 @@ export default function Query() {
                               >
                                 {uploading
                                   ? "Uploading..."
-                                  : "Upload to drive as csv"}
+                                  : "Upload to Google Drive as CSV"}
                               </button>
                             </div>
                           )}
@@ -431,11 +456,70 @@ export default function Query() {
                     aria-label="Close"
                     onClick={() => setFullValue(null)}
                   >
-                    x
+                    ×
                   </button>
                 </div>
                 <p className={styles.modalValue}>{fullValue.value}</p>
               </div>
+            </div>
+          )}
+          {/* Param reset popup: change one value, keep prompt and result. */}
+          {resetTarget && (
+            <div
+              className={styles.modalOverlay}
+              onClick={() => setResetTarget(null)}
+            >
+              <form
+                className={styles.modal}
+                role="dialog"
+                aria-modal="true"
+                onClick={(e) => e.stopPropagation()}
+                onSubmit={handleResetSave}
+              >
+                <div className={styles.modalHeader}>
+                  <p className={styles.infoCardLabel}>
+                    {resetTarget === "value"
+                      ? "Find these records ..."
+                      : "On this column"}
+                  </p>
+                  <button
+                    type="button"
+                    className={styles.modalClose}
+                    aria-label="Close"
+                    onClick={() => setResetTarget(null)}
+                  >
+                    ×
+                  </button>
+                </div>
+                {resetTarget === "value" ? (
+                  <textarea
+                    className={styles.setupInputTextarea}
+                    placeholder="e.g. alice@example.com"
+                    value={resetDraft}
+                    onChange={(e) => setResetDraft(e.target.value)}
+                    rows={3}
+                    autoFocus
+                  />
+                ) : (
+                  <input
+                    className={styles.setupInput}
+                    placeholder="e.g. email"
+                    value={resetDraft}
+                    onChange={(e) => setResetDraft(e.target.value)}
+                    autoFocus
+                  />
+                )}
+                <div className={styles.setupSubmit}>
+                  <button
+                    type="submit"
+                    className={styles.setupBtn}
+                    style={{ opacity: resetDraft.trim() ? 1 : 0.5 }}
+                    disabled={!resetDraft.trim()}
+                  >
+                    Set
+                  </button>
+                </div>
+              </form>
             </div>
           )}
         </div>

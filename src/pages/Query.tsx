@@ -379,16 +379,6 @@ export default function Query() {
                         >
                           Answer
                         </button>
-                        <button
-                          type="button"
-                          className={`${toolStyles.tab} ${
-                            resultTab === "tool" ? toolStyles.tabActive : ""
-                          } ${funcCalls ? "" : styles.tabDisabled}`}
-                          onClick={() => setResultTab("tool")}
-                          disabled={!funcCalls}
-                        >
-                          Tool call
-                        </button>
                         <div className={styles.saveWrap} ref={saveRef}>
                           <button
                             type="button"
@@ -426,6 +416,16 @@ export default function Query() {
                             </div>
                           )}
                         </div>
+                        <button
+                          type="button"
+                          className={`${toolStyles.tab} ${
+                            resultTab === "tool" ? toolStyles.tabActive : ""
+                          } ${funcCalls ? "" : styles.tabDisabled}`}
+                          onClick={() => setResultTab("tool")}
+                          disabled={!funcCalls}
+                        >
+                          Tool call
+                        </button>
                       </div>
                       {uploadError && (
                         <p className={styles.uploadError}>{uploadError}</p>
